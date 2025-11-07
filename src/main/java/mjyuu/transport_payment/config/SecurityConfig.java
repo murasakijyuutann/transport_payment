@@ -1,5 +1,6 @@
 package mjyuu.transport_payment.config;
 
+import mjyuu.transport_payment.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,9 @@ public class SecurityConfig {
                 .requestMatchers("/login.html", "/api-tester.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
+                
+                // Swagger/OpenAPI endpoints
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 
                 // Admin-only endpoints
                 .requestMatchers("/api/journeys/process-incomplete").hasRole("ADMIN")

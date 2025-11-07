@@ -17,6 +17,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     
     boolean existsByCardNumber(String cardNumber);
     
+    Optional<Card> findByUserIdAndIsDefault(Long userId, boolean isDefault);
+    
+    List<Card> findByUserIdAndStatus(Long userId, Card.CardStatus status);
+    
     @Query("SELECT c FROM Card c WHERE c.user.id = ?1 AND c.isDefault = true")
     Optional<Card> findDefaultCardByUserId(Long userId);
     
