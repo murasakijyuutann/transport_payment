@@ -37,8 +37,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/register").permitAll()
                 .requestMatchers("/api/stations/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/login.html", "/api-tester.html").permitAll()
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                
+                // Static resources (HTML, CSS, JS, images)
+                .requestMatchers("/", "/index.html", "/register.html").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
+                .requestMatchers("/favicon.ico").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 
                 // Swagger/OpenAPI endpoints
@@ -54,17 +57,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .formLogin(form -> form
-                .loginPage("/login.html")
-                .defaultSuccessUrl("/dashboard", true)
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login.html")
-                .permitAll()
-            );
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         // H2 console configuration
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
