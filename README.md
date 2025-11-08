@@ -45,6 +45,10 @@ transport-payment-system/
 - **Security**: Spring Security
 - **Build**: Maven
 
+## Deployment Status
+
+> **Status:** Production deployment is scheduled for a future release. The application has been thoroughly tested and is fully operational in the local development environment. Cloud deployment configuration and infrastructure provisioning are currently in progress.
+
 ## Getting Started
 
 ### Prerequisites
