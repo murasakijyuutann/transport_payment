@@ -1,5 +1,8 @@
 package mjyuu.transport_payment.controller;
 
+import mjyuu.transport_payment.dto.CardTopUpRequest;
+import mjyuu.transport_payment.dto.CardTopUpResponse;
+import mjyuu.transport_payment.dto.ApiResponse;
 import mjyuu.transport_payment.entity.User;
 import mjyuu.transport_payment.service.TransactionService;
 import mjyuu.transport_payment.service.UserService;
@@ -31,12 +34,12 @@ public class UserController {
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserProfile(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@PathVariable Long id) {
         log.info("REST API: Get user profile: {}", id);
         
         User user = userService.getUserById(id);
         UserDTO dto = convertToDTO(user);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
     /**
@@ -44,12 +47,12 @@ public class UserController {
      * GET /api/users/email?email=john@example.com
      */
     @GetMapping("/email")
-    public ResponseEntity<UserDTO> getUserByEmail(@RequestParam String email) {
+    public ResponseEntity<ApiResponse<UserDTO>> getUserByEmail(@RequestParam String email) {
         log.info("REST API: Get user by email: {}", email);
         
         User user = userService.getUserByEmail(email);
         UserDTO dto = convertToDTO(user);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
     /**
@@ -57,7 +60,7 @@ public class UserController {
      * PUT /api/users/{id}
      */
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, 
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id, 
                                               @Valid @RequestBody UserUpdateRequest request) {
         log.info("REST API: Update user: {}", id);
         
@@ -70,7 +73,7 @@ public class UserController {
         User user = userService.updateUser(id, updatedUser);
         UserDTO dto = convertToDTO(user);
         
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", dto));
     }
 
     /**
@@ -78,11 +81,10 @@ public class UserController {
      * POST /api/users/{id}/topup
      */
     @PostMapping("/{id}/topup")
-    public ResponseEntity<TopUpResponse> topUpBalance(@PathVariable Long id, 
+    public ResponseEntity<ApiResponse<TopUpResponse>> topUpBalance(@PathVariable Long id, 
                                                       @Valid @RequestBody TopUpRequest request) {
         log.info("REST API: Top up balance for user: {}, amount: {}", id, request.getAmount());
         
-        // Create transaction and update balance
         transactionService.createTopUpTransaction(id, request.getAmount());
         
         BigDecimal newBalance = userService.getUserBalance(id);
@@ -94,7 +96,19 @@ public class UserController {
                 newBalance
         );
         
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Balance topped up successfully", response));
+    }
+
+    /**
+     * Top up balance by charging a credit/debit card
+     * POST /api/users/{id}/topup/card
+     */
+    @PostMapping("/{id}/topup/card")
+    public ResponseEntity<ApiResponse<CardTopUpResponse>> topUpWithCard(@PathVariable Long id,
+                                                           @Valid @RequestBody CardTopUpRequest request) {
+        log.info("REST API: Card top-up for user: {}, amount: {}", id, request.getAmount());
+        CardTopUpResponse response = transactionService.processCardTopUp(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Balance topped up successfully", response));
     }
 
     /**
@@ -102,13 +116,25 @@ public class UserController {
      * GET /api/users/{id}/balance
      */
     @GetMapping("/{id}/balance")
-    public ResponseEntity<BalanceResponse> getUserBalance(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<BalanceResponse>> getUserBalance(@PathVariable Long id) {
         log.info("REST API: Get balance for user: {}", id);
         
         BigDecimal balance = userService.getUserBalance(id);
         BalanceResponse response = new BalanceResponse(balance);
         
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Change user password
+     * PUT /api/users/{id}/password
+     */
+    @PutMapping("/{id}/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@PathVariable Long id,
+                                                            @RequestBody ChangePasswordRequest request) {
+        log.info("REST API: Change password for user: {}", id);
+        userService.changePassword(id, request.getOldPassword(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 
     // Helper method to convert User entity to DTO
@@ -193,5 +219,13 @@ public class UserController {
     @AllArgsConstructor
     public static class BalanceResponse {
         private BigDecimal balance;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChangePasswordRequest {
+        private String oldPassword;
+        private String newPassword;
     }
 }

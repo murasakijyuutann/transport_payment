@@ -117,6 +117,7 @@ function setupEventListeners() {
 
         const userId = getUserId();
         const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+        const cardHolderName = document.getElementById('cardHolderName').value.trim();
         const expiryMonth = document.getElementById('expiryMonth').value;
         const expiryYear = document.getElementById('expiryYear').value;
         const cardType = document.getElementById('cardType').value;
@@ -133,6 +134,7 @@ function setupEventListeners() {
         try {
             const cardData = {
                 cardNumber,
+                cardHolderName,
                 expiryMonth,
                 expiryYear,
                 cardType,
@@ -159,7 +161,7 @@ async function setAsDefault(cardId) {
     if (!confirm('Set this card as your default payment method?')) return;
 
     try {
-        await CardAPI.setDefaultCard(cardId);
+        await CardAPI.setDefaultCard(cardId, getUserId());
         showAlert('alert-container', 'Default card updated!', 'success');
         setTimeout(() => location.reload(), 1000);
     } catch (error) {
@@ -178,7 +180,7 @@ async function deleteCard(cardId) {
     if (!confirm('Are you sure you want to delete this card? This action cannot be undone.')) return;
 
     try {
-        await CardAPI.deleteCard(cardId);
+        await CardAPI.deleteCard(cardId, getUserId());
         showAlert('alert-container', 'Card deleted successfully!', 'success');
         setTimeout(() => location.reload(), 1000);
     } catch (error) {

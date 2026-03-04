@@ -2,6 +2,7 @@ package mjyuu.transport_payment.config;
 
 import mjyuu.transport_payment.exception.InsufficientBalanceException;
 import mjyuu.transport_payment.exception.InvalidJourneyException;
+import mjyuu.transport_payment.exception.PaymentProcessingException;
 import mjyuu.transport_payment.exception.ResourceNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -52,6 +53,17 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PaymentProcessingException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentProcessingException(PaymentProcessingException ex) {
+        log.error("Payment processing failed: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.PAYMENT_REQUIRED.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.PAYMENT_REQUIRED);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

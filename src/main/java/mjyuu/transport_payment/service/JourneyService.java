@@ -200,6 +200,145 @@ public class JourneyService {
     }
 
     /**
+     * Handle tap-in using card ID and station ID (for web dashboard)
+     */
+    @Transactional
+    public TapResponse tapInByCardId(Long cardId, Long stationId) {
+        log.info("Processing tap-in by id: cardId={}, stationId={}", cardId, stationId);
+
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
+
+        if (card.getStatus() != Card.CardStatus.ACTIVE) {
+            throw new InvalidJourneyException("Card is not active");
+        }
+
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Station not found with id: " + stationId));
+
+        if (station.getStatus() != Station.StationStatus.ACTIVE) {
+            throw new InvalidJourneyException("Station is not operational");
+        }
+
+        journeyRepository.findActiveJourneyByCardId(card.getId())
+                .ifPresent(existingJourney -> {
+                    throw new InvalidJourneyException(
+                            "Active journey already exists. Please tap out at: " +
+                            existingJourney.getEntryStation().getName());
+                });
+
+        User user = card.getUser();
+        if (user.getBalance().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InsufficientBalanceException("Insufficient balance. Please top up your account.");
+        }
+
+        Journey journey = Journey.builder()
+                .user(user)
+                .card(card)
+                .entryStation(station)
+                .tapInTime(LocalDateTime.now())
+                .status(Journey.JourneyStatus.IN_PROGRESS)
+                .build();
+
+        journey = journeyRepository.save(journey);
+
+        return TapResponse.builder()
+                .success(true)
+                .message("Tap-in successful at " + station.getName())
+                .journeyId(journey.getId())
+                .journeyStatus(journey.getStatus().name())
+                .stationName(station.getName())
+                .stationCode(station.getStationCode())
+                .tapTime(journey.getTapInTime())
+                .currentBalance(user.getBalance())
+                .build();
+    }
+
+    /**
+     * Handle tap-out using journey ID and exit station ID (for web dashboard)
+     */
+    @Transactional
+    public TapResponse tapOutByJourneyId(Long journeyId, Long exitStationId) {
+        log.info("Processing tap-out by id: journeyId={}, exitStationId={}", journeyId, exitStationId);
+
+        Journey journey = journeyRepository.findById(journeyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Journey not found with id: " + journeyId));
+
+        if (journey.getStatus() != Journey.JourneyStatus.IN_PROGRESS) {
+            throw new InvalidJourneyException("Journey is not in progress");
+        }
+
+        Station exitStation = stationRepository.findById(exitStationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Station not found with id: " + exitStationId));
+
+        LocalDateTime tapOutTime = LocalDateTime.now();
+        journey.setExitStation(exitStation);
+        journey.setTapOutTime(tapOutTime);
+
+        Station entryStation = journey.getEntryStation();
+        int zonesTransited = fareCalculationService.calculateZonesTransited(entryStation, exitStation);
+        BigDecimal baseFare = fareCalculationService.calculateFare(entryStation, exitStation);
+
+        BigDecimal currentDailySpending = transactionRepository.calculateDailySpending(
+                journey.getUser().getId(), LocalDateTime.now());
+        BigDecimal finalFare = fareCalculationService.applyDailyCapping(currentDailySpending, baseFare);
+        BigDecimal discount = baseFare.subtract(finalFare);
+
+        journey.setZonesTransited(zonesTransited);
+        journey.setFareAmount(baseFare);
+        journey.setDiscountAmount(discount);
+        journey.setFinalAmount(finalFare);
+        journey.setStatus(Journey.JourneyStatus.COMPLETED);
+
+        User user = journey.getUser();
+        if (user.getBalance().compareTo(finalFare) < 0) {
+            throw new InsufficientBalanceException(
+                    String.format("Insufficient balance. Required: %.2f, Available: %.2f",
+                                  finalFare, user.getBalance()));
+        }
+
+        user.setBalance(user.getBalance().subtract(finalFare));
+        userRepository.save(user);
+
+        Card card = journey.getCard();
+        Transaction transaction = Transaction.builder()
+                .transactionId(UUID.randomUUID().toString())
+                .user(user)
+                .journey(journey)
+                .card(card)
+                .type(Transaction.TransactionType.JOURNEY_PAYMENT)
+                .amount(finalFare)
+                .status(Transaction.TransactionStatus.COMPLETED)
+                .description(String.format("Journey from %s to %s",
+                                          entryStation.getName(), exitStation.getName()))
+                .build();
+        transactionRepository.save(transaction);
+
+        journeyRepository.save(journey);
+
+        BigDecimal updatedDailySpending = currentDailySpending.add(finalFare);
+        boolean capReached = updatedDailySpending.compareTo(fareCalculationService.getDailyCapAmount()) >= 0;
+
+        return TapResponse.builder()
+                .success(true)
+                .message("Tap-out successful. Journey completed.")
+                .journeyId(journey.getId())
+                .journeyStatus(journey.getStatus().name())
+                .entryStationName(entryStation.getName())
+                .exitStationName(exitStation.getName())
+                .stationName(exitStation.getName())
+                .stationCode(exitStation.getStationCode())
+                .tapTime(tapOutTime)
+                .fareAmount(finalFare)
+                .zonesTransited(zonesTransited)
+                .journeyDurationMinutes(journey.getDurationInMinutes())
+                .currentBalance(user.getBalance())
+                .dailySpending(updatedDailySpending)
+                .dailyCapReached(capReached)
+                .build();
+    }
+
+    /**
      * Get journey history for a user
      */
     @Transactional(readOnly = true)

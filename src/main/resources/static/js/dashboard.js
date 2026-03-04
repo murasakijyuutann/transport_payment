@@ -54,10 +54,10 @@ async function loadRecentJourneys(userId) {
         tbody.innerHTML = recentJourneys.map(journey => `
             <tr>
                 <td>${formatDateTime(journey.tapInTime)}</td>
-                <td>${journey.entryStation?.name || 'N/A'}</td>
-                <td>${journey.exitStation?.name || 'N/A'}</td>
+                <td>${journey.entryStationName || 'N/A'}</td>
+                <td>${journey.exitStationName || 'N/A'}</td>
                 <td>${getStatusBadge(journey.status)}</td>
-                <td>${journey.fare ? formatCurrency(journey.fare) : '-'}</td>
+                <td>${journey.fareAmount ? formatCurrency(journey.fareAmount) : '-'}</td>
                 <td>
                     ${journey.status === 'IN_PROGRESS' ? 
                         `<button class="btn btn-sm btn-danger" onclick="quickTapOut(${journey.id})">
@@ -90,7 +90,7 @@ async function loadMonthlyStats(userId) {
 
         document.getElementById('monthlyJourneys').textContent = thisMonth.length;
         
-        const totalSpent = thisMonth.reduce((sum, j) => sum + (j.fare || 0), 0);
+        const totalSpent = thisMonth.reduce((sum, j) => sum + (j.fareAmount || 0), 0);
         document.getElementById('monthlySpent').textContent = formatCurrency(totalSpent);
     } catch (error) {
         console.error('Error loading monthly stats:', error);
@@ -116,7 +116,7 @@ function populateStationDropdown(elementId) {
 
     select.innerHTML = '<option value="">Select a station...</option>' +
         stations.map(station => 
-            `<option value="${station.id}">${station.name} (Zone ${station.zone})</option>`
+            `<option value="${station.id}">${station.name} (Zone ${station.zoneNumber})</option>`
         ).join('');
 }
 
@@ -127,7 +127,7 @@ async function checkActiveJourney(userId) {
             const alertDiv = document.getElementById('activeJourneyAlert');
             const infoSpan = document.getElementById('activeJourneyInfo');
             
-            infoSpan.textContent = ` You have an active journey from ${activeJourney.entryStation?.name || 'Unknown'}.`;
+            infoSpan.textContent = ` You have an active journey from ${activeJourney.entryStationName || 'Unknown'}.`;
             alertDiv.classList.remove('d-none');
         }
     } catch (error) {
@@ -174,9 +174,8 @@ function setupEventListeners() {
 
         try {
             await JourneyAPI.tapIn({
-                userId: parseInt(userId),
                 cardId: parseInt(cardId),
-                entryStationId: parseInt(stationId)
+                stationId: parseInt(stationId)
             });
             
             alert('Tapped in successfully!');

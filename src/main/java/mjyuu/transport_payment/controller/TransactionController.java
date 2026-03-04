@@ -2,6 +2,7 @@ package mjyuu.transport_payment.controller;
 
 import mjyuu.transport_payment.entity.Transaction;
 import mjyuu.transport_payment.service.TransactionService;
+import mjyuu.transport_payment.dto.ApiResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,7 +30,7 @@ public class TransactionController {
      * GET /api/transactions?userId=1
      */
     @GetMapping
-    public ResponseEntity<List<TransactionDTO>> getUserTransactions(@RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<List<TransactionDTO>>> getUserTransactions(@RequestParam Long userId) {
         log.info("REST API: Get transactions for user: {}", userId);
         
         List<Transaction> transactions = transactionService.getUserTransactions(userId);
@@ -37,7 +38,7 @@ public class TransactionController {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /**
@@ -45,7 +46,7 @@ public class TransactionController {
      * GET /api/transactions/range?userId=1&startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59
      */
     @GetMapping("/range")
-    public ResponseEntity<List<TransactionDTO>> getUserTransactionsByDateRange(
+    public ResponseEntity<ApiResponse<List<TransactionDTO>>> getUserTransactionsByDateRange(
             @RequestParam Long userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
@@ -58,7 +59,7 @@ public class TransactionController {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /**
@@ -66,13 +67,13 @@ public class TransactionController {
      * GET /api/transactions/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TransactionDTO> getTransactionById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<TransactionDTO>> getTransactionById(@PathVariable Long id) {
         log.info("REST API: Get transaction: {}", id);
         
         Transaction transaction = transactionService.getTransactionById(id);
         TransactionDTO dto = convertToDTO(transaction);
         
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
     /**

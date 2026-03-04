@@ -59,27 +59,27 @@ function displayTransactions(transactions) {
     }
 
     tbody.innerHTML = transactions.map(transaction => {
-        const isCredit = transaction.transactionType === 'TOP_UP' || transaction.transactionType === 'REFUND';
+        const isCredit = transaction.type === 'TOP_UP' || transaction.type === 'REFUND';
         const amountClass = isCredit ? 'text-success' : 'text-danger';
         const amountPrefix = isCredit ? '+' : '-';
         
         return `
             <tr>
                 <td><small class="text-muted">#${transaction.id}</small></td>
-                <td>${formatDateTime(transaction.transactionDate)}</td>
+                <td>${formatDateTime(transaction.createdAt)}</td>
                 <td>
-                    <div class="transaction-icon ${transaction.transactionType.toLowerCase().replace('_', '-')}">
-                        <i class="fas fa-${getTransactionIcon(transaction.transactionType)}"></i>
+                    <div class="transaction-icon ${(transaction.type || '').toLowerCase().replace('_', '-')}">
+                        <i class="fas fa-${getTransactionIcon(transaction.type)}"></i>
                     </div>
                 </td>
                 <td>
-                    <strong>${formatTransactionType(transaction.transactionType)}</strong>
+                    <strong>${formatTransactionType(transaction.type)}</strong>
                     <br><small class="text-muted">${transaction.description || '-'}</small>
                 </td>
                 <td class="${amountClass} fw-bold">
                     ${amountPrefix}${formatCurrency(transaction.amount)}
                 </td>
-                <td>${formatCurrency(transaction.balanceAfter)}</td>
+                <td>-</td>
                 <td>${getStatusBadge(transaction.status)}</td>
             </tr>
         `;
@@ -106,13 +106,13 @@ function formatTransactionType(type) {
 function updateStats(transactions) {
     // Calculate top-ups
     const topUps = transactions
-        .filter(t => t.transactionType === 'TOP_UP' || t.transactionType === 'REFUND')
+        .filter(t => t.type === 'TOP_UP' || t.type === 'REFUND')
         .reduce((sum, t) => sum + t.amount, 0);
     document.getElementById('totalTopUps').textContent = formatCurrency(topUps);
     
     // Calculate payments
     const payments = transactions
-        .filter(t => t.transactionType === 'PAYMENT')
+        .filter(t => t.type === 'JOURNEY_PAYMENT' || t.type === 'PAYMENT')
         .reduce((sum, t) => sum + t.amount, 0);
     document.getElementById('totalPayments').textContent = formatCurrency(payments);
     
@@ -137,19 +137,19 @@ function applyFilters() {
     
     // Filter by type
     if (type) {
-        filtered = filtered.filter(t => t.transactionType === type);
+        filtered = filtered.filter(t => t.type === type);
     }
     
     // Filter by date range
     if (fromDate) {
         const from = new Date(fromDate);
-        filtered = filtered.filter(t => new Date(t.transactionDate) >= from);
+        filtered = filtered.filter(t => new Date(t.createdAt) >= from);
     }
     
     if (toDate) {
         const to = new Date(toDate);
         to.setHours(23, 59, 59, 999); // End of day
-        filtered = filtered.filter(t => new Date(t.transactionDate) <= to);
+        filtered = filtered.filter(t => new Date(t.createdAt) <= to);
     }
     
     displayTransactions(filtered);

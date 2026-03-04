@@ -2,6 +2,7 @@ package mjyuu.transport_payment.controller;
 
 import mjyuu.transport_payment.entity.Station;
 import mjyuu.transport_payment.service.StationService;
+import mjyuu.transport_payment.dto.ApiResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +27,7 @@ public class StationController {
      * GET /api/stations
      */
     @GetMapping
-    public ResponseEntity<List<StationDTO>> getAllStations() {
+    public ResponseEntity<ApiResponse<List<StationDTO>>> getAllStations() {
         log.info("REST API: Get all stations");
         
         List<Station> stations = stationService.getAllActiveStations();
@@ -34,7 +35,7 @@ public class StationController {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     /**
@@ -42,13 +43,13 @@ public class StationController {
      * GET /api/stations/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<StationDTO> getStationById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<StationDTO>> getStationById(@PathVariable Long id) {
         log.info("REST API: Get station by id: {}", id);
         
         Station station = stationService.getStationById(id);
         StationDTO dto = convertToDTO(station);
         
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponse.success(dto));
     }
 
     /**

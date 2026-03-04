@@ -1,5 +1,7 @@
 package mjyuu.transport_payment.service;
 
+import mjyuu.transport_payment.dto.CardTopUpRequest;
+import mjyuu.transport_payment.dto.CardTopUpResponse;
 import mjyuu.transport_payment.entity.Transaction;
 import mjyuu.transport_payment.entity.User;
 import mjyuu.transport_payment.exception.ResourceNotFoundException;
@@ -22,6 +24,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final MockPaymentService mockPaymentService;
 
     @Transactional(readOnly = true)
     public List<Transaction> getUserTransactions(Long userId) {
@@ -77,6 +80,47 @@ public class TransactionService {
                  transaction.getId(), userId, amount);
 
         return transaction;
+    }
+
+    @Transactional
+    public CardTopUpResponse processCardTopUp(Long userId, CardTopUpRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        // Validate and "charge" the card — throws PaymentProcessingException if declined
+        MockPaymentService.PaymentResult payment = mockPaymentService.processPayment(request);
+
+        // Record the transaction
+        String transactionId = UUID.randomUUID().toString();
+        Transaction transaction = Transaction.builder()
+                .transactionId(transactionId)
+                .user(user)
+                .type(Transaction.TransactionType.TOP_UP)
+                .amount(request.getAmount())
+                .status(Transaction.TransactionStatus.COMPLETED)
+                .description("Card top-up via •••• " + payment.lastFour())
+                .paymentGatewayReference(payment.paymentReference())
+                .build();
+
+        transaction = transactionRepository.save(transaction);
+
+        // Credit the user's wallet
+        user.setBalance(user.getBalance().add(request.getAmount()));
+        userRepository.save(user);
+
+        log.info("Card top-up completed: user={}, amount={}, ref={}", userId, request.getAmount(), payment.paymentReference());
+
+        return CardTopUpResponse.builder()
+                .success(true)
+                .message("Top-up successful")
+                .transactionId(transactionId)
+                .amount(request.getAmount())
+                .newBalance(user.getBalance())
+                .cardLastFour("•••• " + payment.lastFour())
+                .cardType(payment.cardType())
+                .paymentReference(payment.paymentReference())
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 
     @Transactional

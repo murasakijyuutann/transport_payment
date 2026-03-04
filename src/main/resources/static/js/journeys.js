@@ -67,16 +67,16 @@ function displayJourneys(journeys) {
                 <td>${formatDateTime(journey.tapInTime)}</td>
                 <td>
                     <i class="fas fa-map-marker-alt text-success me-1"></i>
-                    ${journey.entryStation?.name || 'N/A'}
-                    <br><small class="text-muted">Zone ${journey.entryStation?.zone || '-'}</small>
+                    ${journey.entryStationName || 'N/A'}
+                    <br><small class="text-muted">Code: ${journey.entryStationCode || '-'}</small>
                 </td>
                 <td>
                     <i class="fas fa-map-marker-alt text-danger me-1"></i>
-                    ${journey.exitStation?.name || 'N/A'}
-                    <br><small class="text-muted">Zone ${journey.exitStation?.zone || '-'}</small>
+                    ${journey.exitStationName || 'N/A'}
+                    <br><small class="text-muted">Code: ${journey.exitStationCode || '-'}</small>
                 </td>
                 <td>${duration}</td>
-                <td class="fw-bold">${journey.fare ? formatCurrency(journey.fare) : '-'}</td>
+                <td class="fw-bold">${journey.fareAmount ? formatCurrency(journey.fareAmount) : '-'}</td>
                 <td>${getStatusBadge(journey.status)}</td>
             </tr>
         `;
@@ -113,7 +113,7 @@ function updateStats(journeys) {
     document.getElementById('inProgressJourneys').textContent = inProgress.length;
     
     // Total spent
-    const totalSpent = journeys.reduce((sum, j) => sum + (j.fare || 0), 0);
+    const totalSpent = journeys.reduce((sum, j) => sum + (j.fareAmount || 0), 0);
     document.getElementById('totalSpent').textContent = formatCurrency(totalSpent);
 }
 

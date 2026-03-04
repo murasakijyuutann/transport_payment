@@ -2,21 +2,21 @@ spring:
   application:
     name: transport-payment-system
   
-  # Database Configuration (PostgreSQL)
+  # Database Configuration (local PostgreSQL — run: docker-compose up -d)
   datasource:
     url: jdbc:postgresql://localhost:5432/transportdb
     driver-class-name: org.postgresql.Driver
     username: transport_user
-    password: your_password  # Change this to your actual password
+    password: your_password
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
       connection-timeout: 20000
 
-  # JPA Configuration
+  # JPA Configuration — schema owned by Flyway, not Hibernate
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -24,24 +24,17 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-  # H2 Console (disabled for PostgreSQL)
-  # h2:
-  #   console:
-  #     enabled: true
-  #     path: /h2-console
-  
-  # Flyway Configuration
+  # Flyway — runs V1__initial_schema.sql then V2__seed_data.sql on first start
   flyway:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
-  
-  # Redis Configuration (optional for now)
+
+  # Redis Configuration (local — run: docker-compose up -d)
   data:
     redis:
       host: localhost
       port: 6379
-      enabled: true
   
   # Thymeleaf Configuration
   thymeleaf:
@@ -57,7 +50,7 @@ spring:
 
 # Server Configuration
 server:
-  port: 8080
+  port: 8083
   error:
     include-message: always
     include-binding-errors: always

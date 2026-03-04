@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 
                 // Static resources (HTML, CSS, JS, images)
-                .requestMatchers("/", "/index.html", "/register.html").permitAll()
+                .requestMatchers("/", "/*.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
                 .requestMatchers("/actuator/**").permitAll()

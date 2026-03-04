@@ -1,6 +1,6 @@
 // API Configuration and Utility Functions
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8083/api';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -82,10 +82,11 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error('Session expired. Please login again.');
         }
 
-        const data = await response.json();
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
 
         if (!response.ok) {
-            throw new Error(data.message || 'Request failed');
+            throw new Error((data && data.message) || 'Request failed');
         }
 
         return data;
@@ -126,8 +127,9 @@ const UserAPI = {
     },
 
     addBalance: async (userId, amount) => {
-        return await apiRequest(`/users/${userId}/balance/add?amount=${amount}`, {
-            method: 'POST'
+        return await apiRequest(`/users/${userId}/topup`, {
+            method: 'POST',
+            body: JSON.stringify({ amount: parseFloat(amount) })
         });
     },
 
@@ -152,14 +154,14 @@ const CardAPI = {
         });
     },
 
-    setDefaultCard: async (cardId) => {
-        return await apiRequest(`/cards/${cardId}/set-default`, {
+    setDefaultCard: async (cardId, userId) => {
+        return await apiRequest(`/cards/${cardId}/set-default?userId=${userId}`, {
             method: 'PUT'
         });
     },
 
-    deleteCard: async (cardId) => {
-        return await apiRequest(`/cards/${cardId}`, {
+    deleteCard: async (cardId, userId) => {
+        return await apiRequest(`/cards/${cardId}?userId=${userId}`, {
             method: 'DELETE'
         });
     }
@@ -168,25 +170,26 @@ const CardAPI = {
 // Journey API
 const JourneyAPI = {
     getUserJourneys: async (userId) => {
-        return await apiRequest(`/journeys/user/${userId}`);
+        return await apiRequest(`/journeys/history?userId=${userId}`);
     },
 
     tapIn: async (journeyData) => {
-        return await apiRequest('/journeys/tap-in', {
+        return await apiRequest('/journeys/tap-in-by-id', {
             method: 'POST',
             body: JSON.stringify(journeyData)
         });
     },
 
     tapOut: async (journeyId, exitStationId) => {
-        return await apiRequest(`/journeys/${journeyId}/tap-out?exitStationId=${exitStationId}`, {
-            method: 'PUT'
+        return await apiRequest('/journeys/tap-out-by-id', {
+            method: 'POST',
+            body: JSON.stringify({ journeyId, exitStationId })
         });
     },
 
     getActiveJourney: async (userId) => {
         try {
-            const journeys = await apiRequest(`/journeys/user/${userId}`);
+            const journeys = await apiRequest(`/journeys/history?userId=${userId}`);
             return journeys.data?.find(j => j.status === 'IN_PROGRESS') || null;
         } catch (error) {
             return null;
@@ -197,7 +200,7 @@ const JourneyAPI = {
 // Transaction API
 const TransactionAPI = {
     getUserTransactions: async (userId) => {
-        return await apiRequest(`/transactions/user/${userId}`);
+        return await apiRequest(`/transactions?userId=${userId}`);
     }
 };
 
