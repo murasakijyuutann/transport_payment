@@ -27,3 +27,16 @@ walletRouter.post('/wallet/topup', requireAuth, async (req, res, next) => {
     next(err);
   }
 });
+
+walletRouter.get('/account/wallet/ledger', requireAuth, async (req, res, next) => {
+  try {
+    const auth = (req as AuthedRequest).auth;
+    if (!auth) {
+      throw new AppError(401, 'Unauthorized', 'UNAUTHORIZED');
+    }
+    const ledger = await walletService.getLedger(auth.accountId);
+    res.json(ledger);
+  } catch (err) {
+    next(err);
+  }
+});

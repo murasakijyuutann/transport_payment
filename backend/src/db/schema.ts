@@ -252,3 +252,23 @@ export const fareCharges = pgTable('fare_charges', {
   status: fareChargeStatusEnum('status').notNull().default('PENDING'),
   chargedAt: timestamp('charged_at', { withTimezone: true }),
 });
+
+export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
+  'TOP_UP',
+  'FARE',
+  'REFUND',
+  'ADJUSTMENT',
+]);
+
+export const walletLedgerEntries = pgTable('wallet_ledger_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  walletId: uuid('wallet_id')
+    .notNull()
+    .references(() => wallets.id),
+  type: ledgerEntryTypeEnum('type').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  balanceAfter: numeric('balance_after', { precision: 10, scale: 2 }).notNull(),
+  referenceType: varchar('reference_type', { length: 64 }).notNull(),
+  referenceId: uuid('reference_id').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});

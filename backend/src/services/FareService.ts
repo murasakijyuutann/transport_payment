@@ -29,23 +29,38 @@ const engine = new FareEngine([
 ]);
 
 export class FareService {
-  async priceJourney(journeyId: string, tx: DbTx): Promise<FareBreakdown> {
-    const existing = await tx
+  async priceJourney(
+    journeyId: string,
+    tx: DbTx,
+  ): Promise<{ breakdown: FareBreakdown; chargeId: string }> {
+    const existingCalc = await tx
       .select()
       .from(fareCalculations)
       .where(eq(fareCalculations.journeyId, journeyId))
       .limit(1);
-    if (existing[0]) {
+
+    if (existingCalc[0]) {
+      const [existingCharge] = await tx
+        .select()
+        .from(fareCharges)
+        .where(eq(fareCharges.journeyId, journeyId))
+        .limit(1);
+      if (!existingCharge) {
+        throw new AppError(500, 'Fare charge missing for calculation', 'CHARGE_MISSING');
+      }
       return {
-        baseFare: decimalPence(existing[0].baseFare),
-        zoneCharge: decimalPence(existing[0].zoneCharge),
-        timeAdjustment: decimalPence(existing[0].timeAdjustment),
-        discount: decimalPence(existing[0].discount),
-        capAdjustment: decimalPence(existing[0].capAdjustment),
-        penalty: decimalPence(existing[0].penalty),
-        originalFare: decimalPence(existing[0].originalFare),
-        finalFare: decimalPence(existing[0].finalFare),
-        fareRuleId: existing[0].fareRuleId ?? undefined,
+        breakdown: {
+          baseFare: decimalPence(existingCalc[0].baseFare),
+          zoneCharge: decimalPence(existingCalc[0].zoneCharge),
+          timeAdjustment: decimalPence(existingCalc[0].timeAdjustment),
+          discount: decimalPence(existingCalc[0].discount),
+          capAdjustment: decimalPence(existingCalc[0].capAdjustment),
+          penalty: decimalPence(existingCalc[0].penalty),
+          originalFare: decimalPence(existingCalc[0].originalFare),
+          finalFare: decimalPence(existingCalc[0].finalFare),
+          fareRuleId: existingCalc[0].fareRuleId ?? undefined,
+        },
+        chargeId: existingCharge.id,
       };
     }
 
@@ -73,15 +88,22 @@ export class FareService {
       throw new AppError(500, 'Failed to store fare calculation', 'FARE_CALC_FAILED');
     }
 
-    await tx.insert(fareCharges).values({
-      journeyId,
-      fareCalculationId: calc.id,
-      accountId: context.accountId,
-      amount: penceToDecimal(breakdown.finalFare),
-      status: 'PENDING',
-    });
+    const [charge] = await tx
+      .insert(fareCharges)
+      .values({
+        journeyId,
+        fareCalculationId: calc.id,
+        accountId: context.accountId,
+        amount: penceToDecimal(breakdown.finalFare),
+        status: 'PENDING',
+      })
+      .returning();
 
-    return breakdown;
+    if (!charge) {
+      throw new AppError(500, 'Failed to store fare charge', 'CHARGE_CREATE_FAILED');
+    }
+
+    return { breakdown, chargeId: charge.id };
   }
 
   async getFareForAccount(accountId: string, journeyId: string): Promise<FareView> {

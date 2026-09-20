@@ -69,3 +69,19 @@ export interface FareView {
   calculatedAt: string;
   charge: { id: string; amount: string; status: string } | null;
 }
+
+export interface LedgerEntryView {
+  id: string;
+  type: string;
+  amount: string;
+  balanceAfter: string;
+  referenceType: string;
+  referenceId: string;
+  createdAt: string;
+}
+
+export interface LedgerView {
+  balance: string;
+  currency: string;
+  entries: LedgerEntryView[];
+}

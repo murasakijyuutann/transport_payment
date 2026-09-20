@@ -9,7 +9,7 @@ This repository holds a working **Spring Boot prototype** and a planned **TypeSc
 | Layer | State |
 |-------|--------|
 | Legacy prototype | Spring Boot + JPA under `src/` — behavioral reference |
-| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 3 (fare engine) done |
+| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 4 (wallet + ledger) done |
 | Design | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) |
 | Build plan | [`execution_plans/`](execution_plans/) |
 
@@ -86,29 +86,22 @@ execution_plans/   # Phase-by-phase implementation guides
 | 1 | Account + network | User, transit account, fare media, wallet, zones/stations/validators — **done** |
 | 2 | Tap & journey core | `POST /api/taps`, TapEvent → Journey — **done (primary milestone)** |
 | 3 | Fare engine | Zone / rider / incomplete rules, FareCalculation + FareCharge — **done** |
-| 4 | Wallet & ledger | Atomic debit, append-only ledger |
+| 4 | Wallet & ledger | Atomic debit, append-only ledger — **done** |
 | 5 | Daily cap | Accumulators, CapRule, £15 day cap |
 | 6 | Incomplete job | Cron expiry after 4 hours + penalty |
 | 7 | Frontend dashboard | Login, tap simulator, journeys, ledger |
 | 8 | Polish & tests | README for the new stack, seed story, Vitest/Supertest |
 
-### Running Phase 0–3 (current)
+### Running Phase 0–4 (current)
 
 ```bash
-# Terminal 1 — Postgres
 docker compose up -d postgres
-
-# Terminal 2 — API
-cd backend && cp .env.example .env && npm install && npm run db:migrate && npm run db:seed && npm run dev
-# Demo adult:  demo@example.com / password123  (CARD-DEMO-001)
-# Demo student: student@example.com / password123  (CARD-STUDENT-001)
-# After tap-out: GET /api/account/journeys/:id/fare
-
-# Terminal 3 — UI
-cd frontend && npm install && npm run dev
+cd backend && npm install && npm run db:migrate && npm run db:seed && npm run dev
+# After tap-out: wallet drops; GET /api/account/wallet/ledger
+# Insufficient funds on EXIT → 402; journey stays OPEN until topped up
 ```
 
-Start next: [`execution_plans/phase_4_execution_plan.md`](execution_plans/phase_4_execution_plan.md).
+Start next: [`execution_plans/phase_5_execution_plan.md`](execution_plans/phase_5_execution_plan.md).
 
 Full phase index: [`execution_plans/README.md`](execution_plans/README.md).
 

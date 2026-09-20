@@ -8,8 +8,9 @@ import {
 } from '../db/schema.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { TapResult } from '../shared/types.js';
-import { JourneyService } from './JourneyService.js';
 import { FareService } from './FareService.js';
+import { JourneyService } from './JourneyService.js';
+import { WalletService } from './WalletService.js';
 
 export interface TapInput {
   mediaToken: string;
@@ -45,6 +46,7 @@ export class TapService {
   constructor(
     private readonly journeys = new JourneyService(),
     private readonly fares = new FareService(),
+    private readonly wallet = new WalletService(),
   ) {}
 
   async handleTap(input: TapInput): Promise<TapResult> {
@@ -118,7 +120,8 @@ export class TapService {
       );
 
       if (journey.journeyStatus === 'COMPLETED') {
-        await this.fares.priceJourney(journey.journeyId, tx);
+        const { chargeId } = await this.fares.priceJourney(journey.journeyId, tx);
+        await this.wallet.applyFareCharge(chargeId, tx);
       }
 
       return {

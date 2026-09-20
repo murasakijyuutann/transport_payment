@@ -13,6 +13,7 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 | 3 | [phase_3_execution_plan.md](phase_3_execution_plan.md) | Fare engine |
 | 3 audit | [phase_3_audit.md](phase_3_audit.md) | What was built / verified for Phase 3 |
 | 4 | [phase_4_execution_plan.md](phase_4_execution_plan.md) | Wallet deduction & ledger |
+| 4 audit | [phase_4_audit.md](phase_4_audit.md) | What was built / verified for Phase 4 |
 | 5 | [phase_5_execution_plan.md](phase_5_execution_plan.md) | Daily cap |
 | 6 | [phase_6_execution_plan.md](phase_6_execution_plan.md) | Incomplete journey job |
 | 7 | [phase_7_execution_plan.md](phase_7_execution_plan.md) | Frontend dashboard |
