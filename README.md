@@ -2,7 +2,7 @@
 
 Prepaid **Account-Based Ticketing (ABT)** for public transport: tap on / tap off, fare engine, wallet ledger, daily cap, and incomplete-journey expiry — with a thin Vite dashboard for demos.
 
-The Node/TypeScript stack under `backend/` + `frontend/` is the product. The Spring Boot app under `src/` is a **behavioral reference only**.
+Stack: Node/TypeScript under `backend/` + `frontend/`.
 
 ---
 
@@ -75,23 +75,22 @@ flowchart LR
 ```text
 backend/     Express + Drizzle + Postgres (transport_abt)
 frontend/    Vite vanilla TS multi-page dashboard
-src/         Legacy Spring Boot prototype (reference)
 docs/API.md  Route + error-code cheat sheet
 execution_plans/  Phased build + audits
 ```
 
 ---
 
-## Domain shift (Java prototype → ABT)
+## Domain model (ABT)
 
-| Prototype (Java) | Target (ABT) |
-|------------------|--------------|
-| Balance on `User` | `Wallet` on `TransitAccount` |
-| Payment-style `Card` | `FareMedia` (token) |
-| Zone on `Station` | `Zone` → `Station` → `Validator` |
-| Fare fields on journey | `FareCalculation` + `FareCharge` |
-| Single `Transaction` | Ledger + payment + charge |
-| Ad hoc incomplete | Cron + incomplete fare rule |
+| Concept | Role |
+|---------|------|
+| `TransitAccount` + `Wallet` | Passenger identity and stored value |
+| `FareMedia` | Card/device token (not the balance) |
+| `Zone` → `Station` → `Validator` | Network topology |
+| `TapEvent` → `Journey` | Physical taps interpreted as trips |
+| `FareCalculation` + `FareCharge` | Price + amount owed |
+| `WalletLedgerEntry` / `PaymentTransaction` | Stored-value changes vs external money |
 
 **Fare numbers (v1):** base/zone pairs £2.50 same-zone / £4.00 cross-zone, daily cap £15, incomplete penalty £5, max journey 4 hours.
 
@@ -121,16 +120,6 @@ Intentional deferrals (not unfinished work):
 
 ---
 
-## Legacy Spring prototype
-
-Still useful for historical fare UI ideas. Not the destination architecture.
-
-- Stack: Spring Boot 3.4, Java 21, Flyway, JWT, static HTML
-- Run: `docker compose up -d` then `mvn spring-boot:run` (see `application.yml`; often `:8083`)
-- Notes: [`API_PORTFOLIO.md`](API_PORTFOLIO.md), [`WEBSITE_README.md`](WEBSITE_README.md)
-
----
-
 ## Documents
 
 | Document | Role |
@@ -138,3 +127,4 @@ Still useful for historical fare UI ideas. Not the destination architecture.
 | [`docs/API.md`](docs/API.md) | TS API routes & error codes |
 | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design |
 | [`execution_plans/`](execution_plans/) | Phase plans + audits |
+| [`cloud_infrastructure_guide.md`](cloud_infrastructure_guide.md) | Optional AWS deployment sketch |

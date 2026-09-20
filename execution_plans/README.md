@@ -25,4 +25,4 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 
 **How to use:** finish one phase’s acceptance criteria before starting the next. Phase 2 is the first demo-worthy backend milestone; Phase 7 is the first full browser demo. **Phases 0–8 are complete for v1.**
 
-**Stack decision:** greenfield `backend/` + `frontend/` Node/TS rewrite. Existing Spring Boot code under `src/` stays as a behavioral reference only.
+**Stack decision:** greenfield `backend/` + `frontend/` Node/TS rewrite. The legacy Spring Boot tree was removed after Phase 8.
