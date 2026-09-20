@@ -8,6 +8,7 @@ import {
   numeric,
   pgEnum,
   uniqueIndex,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 export const userStatusEnum = pgEnum('user_status', ['ACTIVE', 'SUSPENDED', 'CLOSED']);
@@ -196,3 +197,58 @@ export const journeys = pgTable(
       .where(sql`status = 'OPEN'`),
   ],
 );
+
+export const fareChargeStatusEnum = pgEnum('fare_charge_status', [
+  'PENDING',
+  'CHARGED',
+  'WAIVED',
+  'REFUNDED',
+]);
+
+export const fareRules = pgTable('fare_rules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ruleType: varchar('rule_type', { length: 32 }).notNull(),
+  originZoneId: uuid('origin_zone_id').references(() => zones.id),
+  destinationZoneId: uuid('destination_zone_id').references(() => zones.id),
+  transportMode: varchar('transport_mode', { length: 32 }),
+  riderCategoryId: uuid('rider_category_id').references(() => riderCategories.id),
+  timeBandId: uuid('time_band_id'),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  priority: integer('priority').notNull().default(100),
+  validFrom: timestamp('valid_from', { withTimezone: true }).notNull().defaultNow(),
+  validUntil: timestamp('valid_until', { withTimezone: true }),
+});
+
+export const fareCalculations = pgTable('fare_calculations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  journeyId: uuid('journey_id')
+    .notNull()
+    .references(() => journeys.id),
+  baseFare: numeric('base_fare', { precision: 10, scale: 2 }).notNull(),
+  zoneCharge: numeric('zone_charge', { precision: 10, scale: 2 }).notNull().default('0'),
+  timeAdjustment: numeric('time_adjustment', { precision: 10, scale: 2 }).notNull().default('0'),
+  discount: numeric('discount', { precision: 10, scale: 2 }).notNull().default('0'),
+  capAdjustment: numeric('cap_adjustment', { precision: 10, scale: 2 }).notNull().default('0'),
+  penalty: numeric('penalty', { precision: 10, scale: 2 }).notNull().default('0'),
+  originalFare: numeric('original_fare', { precision: 10, scale: 2 }).notNull(),
+  finalFare: numeric('final_fare', { precision: 10, scale: 2 }).notNull(),
+  fareRuleId: uuid('fare_rule_id').references(() => fareRules.id),
+  calculatedAt: timestamp('calculated_at', { withTimezone: true }).notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+});
+
+export const fareCharges = pgTable('fare_charges', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  journeyId: uuid('journey_id')
+    .notNull()
+    .references(() => journeys.id),
+  fareCalculationId: uuid('fare_calculation_id')
+    .notNull()
+    .references(() => fareCalculations.id),
+  accountId: uuid('account_id')
+    .notNull()
+    .references(() => transitAccounts.id),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  status: fareChargeStatusEnum('status').notNull().default('PENDING'),
+  chargedAt: timestamp('charged_at', { withTimezone: true }),
+});

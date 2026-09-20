@@ -54,3 +54,18 @@ export interface TapResult {
   journeyId: string;
   journeyStatus: 'OPEN' | 'COMPLETED';
 }
+
+export interface FareView {
+  journeyId: string;
+  baseFare: string;
+  zoneCharge: string;
+  timeAdjustment: string;
+  discount: string;
+  capAdjustment: string;
+  penalty: string;
+  originalFare: string;
+  finalFare: string;
+  fareRuleId: string | null;
+  calculatedAt: string;
+  charge: { id: string; amount: string; status: string } | null;
+}

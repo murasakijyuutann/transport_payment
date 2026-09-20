@@ -9,6 +9,7 @@ import {
 import { AppError } from '../middleware/errorHandler.js';
 import type { TapResult } from '../shared/types.js';
 import { JourneyService } from './JourneyService.js';
+import { FareService } from './FareService.js';
 
 export interface TapInput {
   mediaToken: string;
@@ -41,7 +42,10 @@ function inferTapType(validatorType: ValidatorType): 'ENTRY' | 'EXIT' {
 }
 
 export class TapService {
-  constructor(private readonly journeys = new JourneyService()) {}
+  constructor(
+    private readonly journeys = new JourneyService(),
+    private readonly fares = new FareService(),
+  ) {}
 
   async handleTap(input: TapInput): Promise<TapResult> {
     const media = await db.query.fareMedia.findFirst({
@@ -112,6 +116,10 @@ export class TapService {
         },
         tx,
       );
+
+      if (journey.journeyStatus === 'COMPLETED') {
+        await this.fares.priceJourney(journey.journeyId, tx);
+      }
 
       return {
         tapId: tap.id,

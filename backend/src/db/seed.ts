@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, pool } from './index.js';
 import {
   fareMedia,
+  fareRules,
   riderCategories,
   stations,
   transitAccounts,
@@ -38,14 +39,24 @@ const NETWORK: Array<{
   },
 ];
 
+/** Zone-pair tariffs (GBP). */
+const ZONE_PAIR_FARES: Array<{ from: string; to: string; amount: string }> = [
+  { from: '1', to: '1', amount: '2.50' },
+  { from: '1', to: '2', amount: '4.00' },
+  { from: '2', to: '1', amount: '4.00' },
+  { from: '2', to: '2', amount: '2.50' },
+];
+
 async function seed() {
   console.log('Seeding transport_abt…');
 
   const adultId = await upsertRider('ADULT', '0.00');
-  await upsertRider('STUDENT', '50.00');
+  const studentId = await upsertRider('STUDENT', '50.00');
 
+  const zoneIds = new Map<string, string>();
   for (const zoneDef of NETWORK) {
     const zoneId = await upsertZone(zoneDef.zoneCode, zoneDef.zoneName);
+    zoneIds.set(zoneDef.zoneCode, zoneId);
     for (const stationDef of zoneDef.stations) {
       const stationId = await upsertStation(stationDef.code, stationDef.name, zoneId);
       await upsertValidator(stationId, `VAL-${stationDef.code}-ENTRY-01`, 'ENTRY_GATE');
@@ -53,10 +64,48 @@ async function seed() {
     }
   }
 
-  await upsertDemoUser(adultId);
+  await seedFareRules(zoneIds);
+  await upsertDemoUser('demo@example.com', 'Demo', 'Rider', adultId, 'CARD-DEMO-001', '20.00');
+  await upsertDemoUser(
+    'student@example.com',
+    'Student',
+    'Rider',
+    studentId,
+    'CARD-STUDENT-001',
+    '20.00',
+  );
 
   console.log('Seed complete.');
   await pool.end();
+}
+
+async function seedFareRules(zoneIds: Map<string, string>): Promise<void> {
+  for (const pair of ZONE_PAIR_FARES) {
+    const originZoneId = zoneIds.get(pair.from);
+    const destinationZoneId = zoneIds.get(pair.to);
+    if (!originZoneId || !destinationZoneId) {
+      throw new Error(`Missing zone for fare pair ${pair.from}→${pair.to}`);
+    }
+
+    const existing = await db.query.fareRules.findFirst({
+      where: and(
+        eq(fareRules.ruleType, 'ZONE_PAIR'),
+        eq(fareRules.originZoneId, originZoneId),
+        eq(fareRules.destinationZoneId, destinationZoneId),
+      ),
+    });
+    if (existing) continue;
+
+    await db.insert(fareRules).values({
+      ruleType: 'ZONE_PAIR',
+      originZoneId,
+      destinationZoneId,
+      amount: pair.amount,
+      priority: 100,
+      validFrom: new Date('2020-01-01T00:00:00.000Z'),
+    });
+  }
+  console.log('Fare rules: zone pairs seeded');
 }
 
 async function upsertRider(name: string, discountPercent: string): Promise<string> {
@@ -113,13 +162,19 @@ async function upsertValidator(
   });
 }
 
-async function upsertDemoUser(adultCategoryId: string): Promise<void> {
-  const email = 'demo@example.com';
+async function upsertDemoUser(
+  email: string,
+  firstName: string,
+  lastName: string,
+  riderCategoryId: string,
+  mediaToken: string,
+  balance: string,
+): Promise<void> {
   const existing = await db.query.users.findFirst({
     where: eq(users.email, email),
   });
   if (existing) {
-    console.log('Demo user already exists — skipped');
+    console.log(`User ${email} already exists — skipped`);
     return;
   }
 
@@ -131,34 +186,34 @@ async function upsertDemoUser(adultCategoryId: string): Promise<void> {
       .values({
         email,
         passwordHash,
-        firstName: 'Demo',
-        lastName: 'Rider',
+        firstName,
+        lastName,
       })
       .returning();
-    if (!user) throw new Error('Failed to create demo user');
+    if (!user) throw new Error(`Failed to create user ${email}`);
 
     const [account] = await tx
       .insert(transitAccounts)
       .values({
         userId: user.id,
-        riderCategoryId: adultCategoryId,
+        riderCategoryId,
       })
       .returning();
-    if (!account) throw new Error('Failed to create demo account');
+    if (!account) throw new Error(`Failed to create account for ${email}`);
 
     await tx.insert(wallets).values({
       accountId: account.id,
-      balance: '20.00',
+      balance,
     });
 
     await tx.insert(fareMedia).values({
       transitAccountId: account.id,
-      token: 'CARD-DEMO-001',
+      token: mediaToken,
       mediaType: 'TRANSIT_CARD',
     });
   });
 
-  console.log('Demo user: demo@example.com / password123 (CARD-DEMO-001, £20)');
+  console.log(`User: ${email} / password123 (${mediaToken}, £${balance})`);
 }
 
 seed().catch(async (err) => {
