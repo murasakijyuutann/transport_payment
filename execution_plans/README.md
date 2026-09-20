@@ -17,6 +17,7 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 | 5 | [phase_5_execution_plan.md](phase_5_execution_plan.md) | Daily cap |
 | 5 audit | [phase_5_audit.md](phase_5_audit.md) | What was built / verified for Phase 5 |
 | 6 | [phase_6_execution_plan.md](phase_6_execution_plan.md) | Incomplete journey job |
+| 6 audit | [phase_6_audit.md](phase_6_audit.md) | What was built / verified for Phase 6 |
 | 7 | [phase_7_execution_plan.md](phase_7_execution_plan.md) | Frontend dashboard |
 | 8 | [phase_8_execution_plan.md](phase_8_execution_plan.md) | Polish & tests |
 

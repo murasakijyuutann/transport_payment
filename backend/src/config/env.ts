@@ -6,6 +6,7 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16).default('dev-only-change-me-32chars!!'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  MAX_JOURNEY_DURATION_HOURS: z.coerce.number().positive().default(4),
 });
 
 export const env = schema.parse(process.env);

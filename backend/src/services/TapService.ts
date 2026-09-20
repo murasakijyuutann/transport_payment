@@ -8,11 +8,8 @@ import {
 } from '../db/schema.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { TapResult } from '../shared/types.js';
-import { CapService } from './CapService.js';
-import { FareService } from './FareService.js';
 import { JourneyService } from './JourneyService.js';
-import { WalletService } from './WalletService.js';
-import { preCapPence } from '../domain/fare/CapRule.js';
+import { SettlementService } from './SettlementService.js';
 
 export interface TapInput {
   mediaToken: string;
@@ -47,9 +44,7 @@ function inferTapType(validatorType: ValidatorType): 'ENTRY' | 'EXIT' {
 export class TapService {
   constructor(
     private readonly journeys = new JourneyService(),
-    private readonly fares = new FareService(),
-    private readonly wallet = new WalletService(),
-    private readonly caps = new CapService(),
+    private readonly settlement = new SettlementService(),
   ) {}
 
   async handleTap(input: TapInput): Promise<TapResult> {
@@ -123,22 +118,9 @@ export class TapService {
       );
 
       if (journey.journeyStatus === 'COMPLETED') {
-        // Lock order: accumulator → wallet (inside applyFareCharge)
-        const { headroomPence, accumulatorId } = await this.caps.lockHeadroom(
-          account.id,
-          eventTime,
-          tx,
-        );
-        const { breakdown, chargeId } = await this.fares.priceJourney(journey.journeyId, tx, {
-          capHeadroomPence: headroomPence,
+        await this.settlement.settleJourney(journey.journeyId, account.id, eventTime, tx, {
+          allowPendingOnInsufficient: false,
         });
-        await this.wallet.applyFareCharge(chargeId, tx);
-        await this.caps.recordSpend(
-          accumulatorId,
-          preCapPence(breakdown),
-          breakdown.finalFare,
-          tx,
-        );
       }
 
       return {

@@ -1,9 +1,11 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, lt } from 'drizzle-orm';
+import { env } from '../config/env.js';
 import { db } from '../db/index.js';
 import { journeys, stations } from '../db/schema.js';
 import { nextJourneyStatus } from '../domain/journey/JourneyStateMachine.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { JourneyView, StationRef } from '../shared/types.js';
+import { SettlementService } from './SettlementService.js';
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -32,6 +34,8 @@ async function toStationRef(stationId: string): Promise<StationRef> {
 }
 
 export class JourneyService {
+  constructor(private readonly settlement = new SettlementService()) {}
+
   async applyTap(ctx: ApplyTapContext, tx: DbTx): Promise<ApplyTapResult> {
     const [open] = await tx
       .select()
@@ -95,6 +99,71 @@ export class JourneyService {
     }
 
     return { journeyId: updated.id, journeyStatus: 'COMPLETED' };
+  }
+
+  /**
+   * Close OPEN journeys older than max duration as INCOMPLETE_ENTRY and settle penalty.
+   * On insufficient funds: journey still expires, charge left PENDING (no infinite cron retry).
+   */
+  async expireOpenJourneys(now = new Date()): Promise<{ expired: number; charged: number }> {
+    const cutoff = new Date(
+      now.getTime() - env.MAX_JOURNEY_DURATION_HOURS * 3600_000,
+    );
+
+    const stale = await db
+      .select()
+      .from(journeys)
+      .where(and(eq(journeys.status, 'OPEN'), lt(journeys.startedAt, cutoff)));
+
+    let expired = 0;
+    let charged = 0;
+
+    for (const j of stale) {
+      const result = await this.expireOne(j.id, now);
+      if (result.expired) {
+        expired += 1;
+        if (result.charged) charged += 1;
+      }
+    }
+
+    return { expired, charged };
+  }
+
+  private async expireOne(
+    journeyId: string,
+    now: Date,
+  ): Promise<{ expired: boolean; charged: boolean }> {
+    return db.transaction(async (tx) => {
+      const [locked] = await tx
+        .select()
+        .from(journeys)
+        .where(eq(journeys.id, journeyId))
+        .for('update')
+        .limit(1);
+
+      if (!locked || locked.status !== 'OPEN') {
+        return { expired: false, charged: false };
+      }
+
+      const status = nextJourneyStatus('OPEN', { type: 'EXPIRE' });
+      await tx
+        .update(journeys)
+        .set({
+          status,
+          completedAt: now,
+        })
+        .where(eq(journeys.id, journeyId));
+
+      const settle = await this.settlement.settleJourney(
+        journeyId,
+        locked.transitAccountId,
+        now,
+        tx,
+        { allowPendingOnInsufficient: true },
+      );
+
+      return { expired: true, charged: settle.charged };
+    });
   }
 
   async listForAccount(accountId: string): Promise<JourneyView[]> {
