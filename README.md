@@ -1,121 +1,130 @@
 # Transport Payment System
 
-A public transport tap-on/tap-off payment system built with Spring Boot.
+Account-based public transport tap-on / tap-off payments — currently being redesigned.
 
-## Project Structure
+## Status: overhaul in progress
 
-```
-transport-payment-system/
-├── src/
-│   ├── main/
-│   │   ├── java/com/transport/payment/
-│   │   │   ├── config/          # Configuration classes
-│   │   │   ├── controller/      # REST & Web controllers
-│   │   │   ├── dto/             # Data Transfer Objects
-│   │   │   ├── entity/          # JPA entities
-│   │   │   ├── repository/      # Spring Data repositories
-│   │   │   ├── service/         # Business logic
-│   │   │   ├── exception/       # Custom exceptions
-│   │   │   └── util/            # Utility classes
-│   │   └── resources/
-│   │       ├── db/migration/    # Flyway scripts
-│   │       ├── templates/       # Thymeleaf templates
-│   │       ├── static/          # CSS, JS, images
-│   │       └── application.yml  # Configuration
-│   └── test/                    # Test files
-└── pom.xml
-```
+This repository holds a working **Spring Boot prototype** and a planned **TypeScript rewrite** into a more realistic Account-Based Ticketing (ABT) system.
 
-## Core Entities
+| Layer | State |
+|-------|--------|
+| Legacy prototype | Spring Boot + JPA under `src/` — behavioral reference |
+| Target system | Node.js / Express / TypeScript + Drizzle + Vite — not started yet |
+| Design | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) |
+| Build plan | [`execution_plans/`](execution_plans/) |
 
-1. **User** - System users (customers, admins)
-2. **Card** - Payment cards linked to users
-3. **Station** - Transport stations with zones
-4. **Journey** - Tap-in/tap-out records
-5. **Transaction** - Payment transactions
+The Java app remains runnable for reference. New work follows the phase plans; do not extend the Spring domain model as the long-term architecture.
 
-## Technology Stack
+---
 
-- **Framework**: Spring Boot 3.2.0
-- **Java**: 17
-- **Database**: H2 (dev), PostgreSQL (prod)
-- **ORM**: Spring Data JPA + Hibernate
-- **Migration**: Flyway
-- **Frontend**: Thymeleaf + Bootstrap 5
-- **Security**: Spring Security
-- **Build**: Maven
+## What this project is about
 
-## Deployment Status
+Model a prepaid transit payment backend closer to how real systems separate concerns:
 
-> **Status:** Production deployment is scheduled for a future release. The application has been thoroughly tested and is fully operational in the local development environment. Cloud deployment configuration and infrastructure provisioning are currently in progress.
+- A physical card or device is only an identifier (**fare media**), not the source of truth for balance or journeys.
+- Travel identity lives on a **transit account** (with rider category and wallet).
+- Gate activity is stored as **tap events**; a **journey** is an interpretation of those events.
+- Pricing is a dedicated **fare engine** with an auditable **fare calculation**.
+- Money owed is a **fare charge**; stored value changes via an append-only **wallet ledger**.
+- External money movement (e.g. mock top-up) is a **payment transaction**, separate from fare.
 
-## Getting Started
+Each stage answers a different question:
 
-### Prerequisites
-- Java 17 or higher
-- Maven 3.6+
-
-### Running the Application
-
-1. Build the project:
-```bash
-mvn clean install
+```text
+TapEvent          → What physically happened?
+Journey           → What trip did those events represent?
+FareCalculation   → What should this trip cost, and why?
+FareCharge        → What does the passenger owe?
+WalletLedgerEntry → How did stored value change?
+PaymentTransaction→ What external money moved?
 ```
 
-2. Run the application:
-```bash
-mvn spring-boot:run
+---
+
+## Objective
+
+Deliver a portfolio-ready ABT demo that can:
+
+1. Register a passenger, issue transit-card media, and top up a prepaid wallet.
+2. Accept tap-in / tap-out against validators and stations, producing journeys.
+3. Price completed trips with zone rules, rider discounts, and a stored fare breakdown.
+4. Debit the wallet atomically with a full ledger history.
+5. Enforce a daily fare cap.
+6. Auto-penalise journeys left open past a time limit (scheduled job).
+7. Expose a simple browser dashboard for the full flow end-to-end.
+
+**Primary milestone:** Phase 2 — tap & journey core (events → open/completed journeys) before fare and wallet layers.
+
+**Out of v1 scope:** open-loop bank cards, Stripe, weekly/peak fares, journey correction/refunds, debt recovery.
+
+---
+
+## Target stack
+
+```text
+Backend:   Node.js + Express + TypeScript, Drizzle ORM, PostgreSQL, node-cron
+Frontend:  Vite (vanilla TypeScript), native fetch
+Testing:   Vitest (unit) + Supertest (integration)
 ```
 
-3. Access the application:
-- Main app: http://localhost:8080
-- H2 Console: http://localhost:8080/h2-console
-  - JDBC URL: jdbc:h2:mem:transportdb
-  - Username: sa
-  - Password: (leave blank)
+Target layout (from the overhaul doc):
 
-### Default Users
+```text
+backend/     # Express API, domain, jobs, Drizzle
+frontend/    # Vite dashboard
+src/         # Legacy Spring Boot prototype (reference only)
+execution_plans/   # Phase-by-phase implementation guides
+```
 
-**Customer Account:**
-- Email: john.doe@example.com
-- Password: password123
+---
 
-**Admin Account:**
-- Email: admin@transport.com
-- Password: admin123
+## Build phases
 
-## Key Features (Planned)
+| Phase | Focus | Detail |
+|-------|--------|--------|
+| 0 | Setup & skeleton | Health check, Drizzle, Vite proxy |
+| 1 | Account + network | User, transit account, fare media, wallet, zones/stations/validators |
+| 2 | Tap & journey core | `POST /api/taps`, TapEvent → Journey — **main milestone** |
+| 3 | Fare engine | Zone / rider / incomplete rules, FareCalculation + FareCharge |
+| 4 | Wallet & ledger | Atomic debit, append-only ledger |
+| 5 | Daily cap | Accumulators, CapRule, £15 day cap |
+| 6 | Incomplete job | Cron expiry after 4 hours + penalty |
+| 7 | Frontend dashboard | Login, tap simulator, journeys, ledger |
+| 8 | Polish & tests | README for the new stack, seed story, Vitest/Supertest |
 
-- [x] User registration and authentication
-- [x] Card management
-- [x] Station management with zones
-- [ ] Tap-in/tap-out functionality
-- [ ] Automatic fare calculation
-- [ ] Daily fare capping
-- [ ] Journey history
-- [ ] Balance top-up
-- [ ] Transaction history
-- [ ] Admin dashboard
+Start here: [`execution_plans/README.md`](execution_plans/README.md) → [`phase_0_execution_plan.md`](execution_plans/phase_0_execution_plan.md).
 
-## Database Schema
+---
 
-See `src/main/resources/db/migration/` for the complete schema.
+## Domain shift (prototype → target)
 
-## Configuration
+| Prototype (Java) | Target (ABT) |
+|------------------|--------------|
+| Balance on `User` | `Wallet` on `TransitAccount` |
+| Payment-style `Card` | `FareMedia` (transit token) |
+| Zone embedded on `Station` | `Zone` → `Station` → `Validator` |
+| Journey holds fare fields | `FareCalculation` + `FareCharge` |
+| Single `Transaction` type | Ledger + payment + charge separated |
+| Incomplete handling ad hoc | Scheduled job + incomplete fare rule |
 
-Key configuration in `application.yml`:
-- `transport.payment.max-journey-duration-hours`: 4 hours
-- `transport.payment.incomplete-journey-penalty`: £5.00
-- `transport.payment.daily-cap-amount`: £15.00
-- `transport.payment.base-fare`: £2.50
-- `transport.payment.per-zone-charge`: £1.50
+---
 
-## Next Steps
+## Legacy Spring prototype (reference)
 
-1. Create repositories for data access
-2. Implement service layer with business logic
-3. Build REST API controllers
-4. Create Thymeleaf UI
-5. Implement fare calculation algorithm
-6. Add security configuration
-7. Implement daily capping logic# transport_payment
+Still useful for fare numbers and UI flow ideas. Not the destination architecture.
+
+- **Stack:** Spring Boot 3.4, Java 21, PostgreSQL, Flyway, JWT, static HTML/JS
+- **Run:** `docker compose up -d` then `mvn spring-boot:run` (app port typically `8083` — see `application.yml`)
+- **Fare config (same numbers carried into the overhaul):** base £2.50, per-zone £1.50, daily cap £15, incomplete penalty £5, max journey 4 hours
+- **API notes:** [`API_PORTFOLIO.md`](API_PORTFOLIO.md) · UI notes: [`WEBSITE_README.md`](WEBSITE_README.md)
+
+---
+
+## Documents
+
+| Document | Role |
+|----------|------|
+| [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design and information flows |
+| [`execution_plans/`](execution_plans/) | Ordered implementation plans with scaffolding and acceptance criteria |
+| [`API_PORTFOLIO.md`](API_PORTFOLIO.md) | Legacy Spring API overview |
+| [`WEBSITE_README.md`](WEBSITE_README.md) | Legacy static frontend notes |
