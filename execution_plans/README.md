@@ -5,6 +5,7 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 | Phase | File | Milestone |
 |-------|------|-----------|
 | 0 | [phase_0_execution_plan.md](phase_0_execution_plan.md) | Skeleton: health check + Vite |
+| 0 audit | [phase_0_audit.md](phase_0_audit.md) | What was built / verified for Phase 0 |
 | 1 | [phase_1_execution_plan.md](phase_1_execution_plan.md) | Account + network data |
 | 2 | [phase_2_execution_plan.md](phase_2_execution_plan.md) | **Tap & journey core** (primary) |
 | 3 | [phase_3_execution_plan.md](phase_3_execution_plan.md) | Fare engine |
