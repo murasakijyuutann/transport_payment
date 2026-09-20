@@ -3,16 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Transport Payment — ABT</title>
+    <title>TransitPay — Sign in</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <main class="shell">
-      <p class="brand">Transport Payment</p>
-      <h1>ABT overhaul skeleton</h1>
-      <p class="lede">Phase 0 — backend health via Vite proxy.</p>
-      <p id="health" class="health" aria-live="polite">Checking API…</p>
+    <main class="shell auth-card">
+      <p class="brand">TransitPay</p>
+      <h1>Sign in</h1>
+      <p class="lede">Account-based transit wallet demo.</p>
+      <div id="error" class="error" hidden></div>
+      <form id="login-form" class="panel stack">
+        <label>Email <input name="email" type="email" required value="demo@example.com" /></label>
+        <label>Password <input name="password" type="password" required value="password123" /></label>
+        <button class="primary" type="submit">Sign in</button>
+      </form>
+      <p class="meta">No account? <a href="/register.html">Register</a></p>
+      <p class="meta">Demo: demo@example.com / password123 · student@example.com</p>
     </main>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/pages/login.ts"></script>
   </body>
 </html>

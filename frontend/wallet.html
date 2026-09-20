@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitPay — Wallet</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="site-header" id="nav"></header>
+      <h1>Wallet</h1>
+      <div id="error" class="error" hidden></div>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="label">Balance</div>
+          <div class="value" id="balance">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Daily cap</div>
+          <div class="value" style="font-size:1rem" id="cap">—</div>
+        </div>
+      </div>
+
+      <h2>Top up</h2>
+      <div class="panel stack">
+        <div class="row">
+          <button type="button" class="chip" data-topup="10">£10</button>
+          <button type="button" class="chip" data-topup="20">£20</button>
+          <button type="button" class="chip" data-topup="50">£50</button>
+        </div>
+        <div class="row">
+          <label style="flex:1">Custom £ <input id="custom-amount" type="number" min="0.01" step="0.01" /></label>
+          <button type="button" class="primary" id="custom-topup">Top up</button>
+        </div>
+      </div>
+
+      <h2>Ledger</h2>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Balance after</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-body">
+            <tr><td colspan="4" class="meta">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Ops</h2>
+      <div class="panel stack">
+        <p class="meta">Run incomplete-journey expiry now (same as the 5-minute cron).</p>
+        <button type="button" class="chip" id="expire-btn">Expire stale journeys</button>
+        <div id="expire-result" class="meta"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/pages/wallet.ts"></script>
+  </body>
+</html>

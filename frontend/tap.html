@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransitPay — Simulate tap</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="site-header" id="nav"></header>
+      <h1>Simulate tap</h1>
+      <p class="lede">Present fare media at a validator (ENTRY / EXIT inferred from gate type).</p>
+      <div id="error" class="error" hidden></div>
+      <form id="tap-form" class="panel stack">
+        <label>Media token <input id="mediaToken" name="mediaToken" class="mono" required /></label>
+        <label>
+          Validator
+          <select id="validatorId" name="validatorId" required></select>
+        </label>
+        <button class="primary" type="submit">Post tap</button>
+      </form>
+      <h2>Result</h2>
+      <div id="result" class="panel meta">Waiting for a tap…</div>
+    </div>
+    <script type="module" src="/src/pages/tap.ts"></script>
+  </body>
+</html>

@@ -156,13 +156,15 @@ Old UI talks to Spring endpoints (`/api/users/...`, card CRUD, user balance). Ne
 
 ## 5. Acceptance criteria
 
-- [ ] Login/register works against new backend
-- [ ] Dashboard shows balance + media token
-- [ ] Tap simulator completes a round trip
-- [ ] Journey history + fare breakdown visible
-- [ ] Top-up + ledger visible
-- [ ] Cap status visible if Phase 5 merged
-- [ ] Vite proxy works in dev (no CORS pain)
+- [x] Login/register works against new backend
+- [x] Dashboard shows balance + media token
+- [x] Tap simulator completes a round trip
+- [x] Journey history + fare breakdown visible
+- [x] Top-up + ledger visible
+- [x] Cap status visible if Phase 5 merged
+- [x] Vite proxy works in dev (no CORS pain)
+
+**Audit:** [`phase_7_audit.md`](phase_7_audit.md)
 
 ## 6. Out of scope
 

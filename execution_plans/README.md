@@ -19,6 +19,7 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 | 6 | [phase_6_execution_plan.md](phase_6_execution_plan.md) | Incomplete journey job |
 | 6 audit | [phase_6_audit.md](phase_6_audit.md) | What was built / verified for Phase 6 |
 | 7 | [phase_7_execution_plan.md](phase_7_execution_plan.md) | Frontend dashboard |
+| 7 audit | [phase_7_audit.md](phase_7_audit.md) | What was built / verified for Phase 7 |
 | 8 | [phase_8_execution_plan.md](phase_8_execution_plan.md) | Polish & tests |
 
 **How to use:** finish one phase’s acceptance criteria before starting the next. Phase 2 is the first demo-worthy backend milestone; Phase 7 is the first full browser demo.

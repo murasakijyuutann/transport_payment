@@ -9,7 +9,7 @@ This repository holds a working **Spring Boot prototype** and a planned **TypeSc
 | Layer | State |
 |-------|--------|
 | Legacy prototype | Spring Boot + JPA under `src/` — behavioral reference |
-| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 6 (incomplete journeys) done |
+| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 7 (frontend dashboard) done |
 | Design | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) |
 | Build plan | [`execution_plans/`](execution_plans/) |
 
@@ -89,18 +89,22 @@ execution_plans/   # Phase-by-phase implementation guides
 | 4 | Wallet & ledger | Atomic debit, append-only ledger — **done** |
 | 5 | Daily cap | Accumulators, CapRule, £15 day cap — **done** |
 | 6 | Incomplete job | Cron expiry after 4 hours + penalty — **done** |
-| 7 | Frontend dashboard | Login, tap simulator, journeys, ledger |
+| 7 | Frontend dashboard | Login, tap simulator, journeys, ledger — **done** |
 | 8 | Polish & tests | README for the new stack, seed story, Vitest/Supertest |
 
-### Running Phase 0–6 (current)
+### Running Phase 0–7 (current)
 
 ```bash
 docker compose up -d postgres
 cd backend && npm install && npm run db:migrate && npm run db:seed && npm run dev
 # Cron expires OPEN journeys after 4h; demo: POST /api/admin/jobs/expire-journeys
+
+cd frontend && npm install && npm run dev
+# http://localhost:5173 — proxy /api → :3000
+# Demo: demo@example.com / password123
 ```
 
-Start next: [`execution_plans/phase_7_execution_plan.md`](execution_plans/phase_7_execution_plan.md).
+Start next: [`execution_plans/phase_8_execution_plan.md`](execution_plans/phase_8_execution_plan.md).
 
 Full phase index: [`execution_plans/README.md`](execution_plans/README.md).
 
