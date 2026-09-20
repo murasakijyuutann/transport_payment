@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { and, eq } from 'drizzle-orm';
 import { db, pool } from './index.js';
 import {
+  fareCaps,
   fareMedia,
   fareRules,
   riderCategories,
@@ -65,6 +66,7 @@ async function seed() {
   }
 
   await seedFareRules(zoneIds);
+  await seedDailyCap();
   await upsertDemoUser('demo@example.com', 'Demo', 'Rider', adultId, 'CARD-DEMO-001', '20.00');
   await upsertDemoUser(
     'student@example.com',
@@ -106,6 +108,23 @@ async function seedFareRules(zoneIds: Map<string, string>): Promise<void> {
     });
   }
   console.log('Fare rules: zone pairs seeded');
+}
+
+async function seedDailyCap(): Promise<void> {
+  const existing = await db.query.fareCaps.findFirst({
+    where: eq(fareCaps.capType, 'DAILY'),
+  });
+  if (existing) {
+    console.log('Daily fare cap already exists — skipped');
+    return;
+  }
+  await db.insert(fareCaps).values({
+    capType: 'DAILY',
+    amount: '15.00',
+    scope: 'ALL_ZONES',
+    validFrom: new Date('2020-01-01T00:00:00.000Z'),
+  });
+  console.log('Daily fare cap: £15.00');
 }
 
 async function upsertRider(name: string, discountPercent: string): Promise<string> {

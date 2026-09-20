@@ -29,6 +29,13 @@
       "when": 1789900896588,
       "tag": "0003_chubby_jocasta",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789901091731,
+      "tag": "0004_left_frightful_four",
+      "breakpoints": true
     }
   ]
 }

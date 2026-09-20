@@ -272,3 +272,30 @@ export const walletLedgerEntries = pgTable('wallet_ledger_entries', {
   referenceId: uuid('reference_id').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const fareCaps = pgTable('fare_caps', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  capType: varchar('cap_type', { length: 16 }).notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  scope: varchar('scope', { length: 32 }).notNull().default('ALL_ZONES'),
+  validFrom: timestamp('valid_from', { withTimezone: true }).notNull(),
+  validTo: timestamp('valid_to', { withTimezone: true }),
+});
+
+export const fareAccumulators = pgTable(
+  'fare_accumulators',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => transitAccounts.id),
+    periodType: varchar('period_type', { length: 16 }).notNull(),
+    periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+    eligibleSpend: numeric('eligible_spend', { precision: 10, scale: 2 }).notNull().default('0'),
+    chargedAmount: numeric('charged_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    capAmount: numeric('cap_amount', { precision: 10, scale: 2 }).notNull(),
+  },
+  (t) => [
+    uniqueIndex('fare_acc_account_period_uidx').on(t.accountId, t.periodType, t.periodStart),
+  ],
+);

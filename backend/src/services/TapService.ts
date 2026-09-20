@@ -8,9 +8,11 @@ import {
 } from '../db/schema.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { TapResult } from '../shared/types.js';
+import { CapService } from './CapService.js';
 import { FareService } from './FareService.js';
 import { JourneyService } from './JourneyService.js';
 import { WalletService } from './WalletService.js';
+import { preCapPence } from '../domain/fare/CapRule.js';
 
 export interface TapInput {
   mediaToken: string;
@@ -47,6 +49,7 @@ export class TapService {
     private readonly journeys = new JourneyService(),
     private readonly fares = new FareService(),
     private readonly wallet = new WalletService(),
+    private readonly caps = new CapService(),
   ) {}
 
   async handleTap(input: TapInput): Promise<TapResult> {
@@ -120,8 +123,22 @@ export class TapService {
       );
 
       if (journey.journeyStatus === 'COMPLETED') {
-        const { chargeId } = await this.fares.priceJourney(journey.journeyId, tx);
+        // Lock order: accumulator → wallet (inside applyFareCharge)
+        const { headroomPence, accumulatorId } = await this.caps.lockHeadroom(
+          account.id,
+          eventTime,
+          tx,
+        );
+        const { breakdown, chargeId } = await this.fares.priceJourney(journey.journeyId, tx, {
+          capHeadroomPence: headroomPence,
+        });
         await this.wallet.applyFareCharge(chargeId, tx);
+        await this.caps.recordSpend(
+          accumulatorId,
+          preCapPence(breakdown),
+          breakdown.finalFare,
+          tx,
+        );
       }
 
       return {

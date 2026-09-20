@@ -11,6 +11,7 @@ import {
   transitAccounts,
   zones,
 } from '../db/schema.js';
+import { CapRule } from '../domain/fare/CapRule.js';
 import { FareEngine } from '../domain/fare/FareEngine.js';
 import { IncompleteJourneyRule } from '../domain/fare/IncompleteJourneyRule.js';
 import { penceToDecimal } from '../domain/fare/money.js';
@@ -26,12 +27,14 @@ const engine = new FareEngine([
   new ZoneRule(),
   new RiderCategoryRule(),
   new IncompleteJourneyRule(),
+  new CapRule(),
 ]);
 
 export class FareService {
   async priceJourney(
     journeyId: string,
     tx: DbTx,
+    opts: { capHeadroomPence?: number } = {},
   ): Promise<{ breakdown: FareBreakdown; chargeId: string }> {
     const existingCalc = await tx
       .select()
@@ -64,7 +67,7 @@ export class FareService {
       };
     }
 
-    const context = await this.buildContext(journeyId, tx);
+    const context = await this.buildContext(journeyId, tx, opts.capHeadroomPence);
     const breakdown = engine.calculate(context);
 
     const [calc] = await tx
@@ -150,6 +153,7 @@ export class FareService {
   private async buildContext(
     journeyId: string,
     tx: DbTx,
+    capHeadroomPence?: number,
   ): Promise<FareContext & { accountId: string }> {
     const [journey] = await tx.select().from(journeys).where(eq(journeys.id, journeyId)).limit(1);
     if (!journey) {
@@ -200,6 +204,7 @@ export class FareService {
       zonePairAmountPence,
       fareRuleId,
       incompletePenaltyPence: fareConfig.incompleteJourneyPenaltyPence,
+      capHeadroomPence: capHeadroomPence ?? fareConfig.dailyCapPence,
     };
   }
 }

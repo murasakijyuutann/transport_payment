@@ -85,3 +85,12 @@ export interface LedgerView {
   currency: string;
   entries: LedgerEntryView[];
 }
+
+export interface CapStatusView {
+  periodType: 'DAILY';
+  periodStart: string;
+  capAmount: string;
+  chargedAmount: string;
+  eligibleSpend: string;
+  remainingHeadroom: string;
+}

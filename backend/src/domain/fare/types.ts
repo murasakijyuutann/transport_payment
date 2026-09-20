@@ -19,7 +19,7 @@ export interface FareContext {
   capHeadroomPence?: number;
 }
 
-/** All amounts in integer pence. discount/capAdjustment are reductions (positive = money off). */
+/** All amounts in integer pence. discount = positive reduction; capAdjustment ≤ 0. */
 export interface FareBreakdown {
   baseFare: number;
   zoneCharge: number;
