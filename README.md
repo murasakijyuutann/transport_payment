@@ -9,7 +9,7 @@ This repository holds a working **Spring Boot prototype** and a planned **TypeSc
 | Layer | State |
 |-------|--------|
 | Legacy prototype | Spring Boot + JPA under `src/` — behavioral reference |
-| Target system | Node.js / Express / TypeScript + Drizzle + Vite — not started yet |
+| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 0 skeleton done |
 | Design | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) |
 | Build plan | [`execution_plans/`](execution_plans/) |
 
@@ -82,7 +82,7 @@ execution_plans/   # Phase-by-phase implementation guides
 
 | Phase | Focus | Detail |
 |-------|--------|--------|
-| 0 | Setup & skeleton | Health check, Drizzle, Vite proxy |
+| 0 | Setup & skeleton | Health check, Drizzle, Vite proxy — **done** |
 | 1 | Account + network | User, transit account, fare media, wallet, zones/stations/validators |
 | 2 | Tap & journey core | `POST /api/taps`, TapEvent → Journey — **main milestone** |
 | 3 | Fare engine | Zone / rider / incomplete rules, FareCalculation + FareCharge |
@@ -92,7 +92,27 @@ execution_plans/   # Phase-by-phase implementation guides
 | 7 | Frontend dashboard | Login, tap simulator, journeys, ledger |
 | 8 | Polish & tests | README for the new stack, seed story, Vitest/Supertest |
 
-Start here: [`execution_plans/README.md`](execution_plans/README.md) → [`phase_0_execution_plan.md`](execution_plans/phase_0_execution_plan.md).
+### Running Phase 0 (current)
+
+```bash
+# Terminal 1 — Postgres (creates transport_abt on first volume init)
+docker compose up -d postgres
+# If the volume already existed before the ABT init script was added:
+#   docker exec -it transport-postgres psql -U transport_user -d postgres \
+#     -c "CREATE DATABASE transport_abt OWNER transport_user;"
+
+# Terminal 2 — API
+cd backend && cp .env.example .env && npm install && npm run dev
+# → http://localhost:3000/api/health  →  {"status":"ok"}
+
+# Terminal 3 — UI (proxies /api → :3000)
+cd frontend && npm install && npm run dev
+# → http://localhost:5173
+```
+
+Start next: [`execution_plans/phase_1_execution_plan.md`](execution_plans/phase_1_execution_plan.md).
+
+Full phase index: [`execution_plans/README.md`](execution_plans/README.md).
 
 ---
 

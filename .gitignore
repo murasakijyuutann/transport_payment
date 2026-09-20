@@ -4,6 +4,17 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Node / ABT overhaul ###
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+backend/dist/
+frontend/dist/
+backend/.env
+frontend/.env
+*.log
+.DS_Store
+
 ### STS ###
 .apt_generated
 .classpath

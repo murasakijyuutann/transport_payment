@@ -1,0 +1,63 @@
+:root {
+  color-scheme: light;
+  --ink: #1a1f24;
+  --muted: #5c6770;
+  --ok: #1b6b3a;
+  --err: #8b1e1e;
+  --bg1: #e8eef2;
+  --bg2: #d4e0e8;
+  --accent: #0c4a6e;
+  font-family: "Segoe UI", "IBM Plex Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, #b8d4e8 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg1), var(--bg2));
+}
+
+.shell {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.brand {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.lede {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+}
+
+.health {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.95rem;
+}
+
+.health[data-state='ok'] {
+  color: var(--ok);
+}
+
+.health[data-state='error'] {
+  color: var(--err);
+}
