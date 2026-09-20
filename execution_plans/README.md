@@ -21,7 +21,8 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 | 7 | [phase_7_execution_plan.md](phase_7_execution_plan.md) | Frontend dashboard |
 | 7 audit | [phase_7_audit.md](phase_7_audit.md) | What was built / verified for Phase 7 |
 | 8 | [phase_8_execution_plan.md](phase_8_execution_plan.md) | Polish & tests |
+| 8 audit | [phase_8_audit.md](phase_8_audit.md) | What was built / verified for Phase 8 |
 
-**How to use:** finish one phase’s acceptance criteria before starting the next. Phase 2 is the first demo-worthy backend milestone; Phase 7 is the first full browser demo.
+**How to use:** finish one phase’s acceptance criteria before starting the next. Phase 2 is the first demo-worthy backend milestone; Phase 7 is the first full browser demo. **Phases 0–8 are complete for v1.**
 
 **Stack decision:** greenfield `backend/` + `frontend/` Node/TS rewrite. Existing Spring Boot code under `src/` stays as a behavioral reference only.

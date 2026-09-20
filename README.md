@@ -1,136 +1,133 @@
-# Transport Payment System
+# Transport Payment System (TransitPay)
 
-Account-based public transport tap-on / tap-off payments — currently being redesigned.
+Prepaid **Account-Based Ticketing (ABT)** for public transport: tap on / tap off, fare engine, wallet ledger, daily cap, and incomplete-journey expiry — with a thin Vite dashboard for demos.
 
-## Status: overhaul in progress
-
-This repository holds a working **Spring Boot prototype** and a planned **TypeScript rewrite** into a more realistic Account-Based Ticketing (ABT) system.
-
-| Layer | State |
-|-------|--------|
-| Legacy prototype | Spring Boot + JPA under `src/` — behavioral reference |
-| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 7 (frontend dashboard) done |
-| Design | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) |
-| Build plan | [`execution_plans/`](execution_plans/) |
-
-The Java app remains runnable for reference. New work follows the phase plans; do not extend the Spring domain model as the long-term architecture.
+The Node/TypeScript stack under `backend/` + `frontend/` is the product. The Spring Boot app under `src/` is a **behavioral reference only**.
 
 ---
 
-## What this project is about
+## Quick start (<10 minutes)
 
-Model a prepaid transit payment backend closer to how real systems separate concerns:
+```bash
+# 1. Postgres (creates transport_abt + transport_abt_test on first volume init)
+docker compose up -d postgres
 
-- A physical card or device is only an identifier (**fare media**), not the source of truth for balance or journeys.
-- Travel identity lives on a **transit account** (with rider category and wallet).
-- Gate activity is stored as **tap events**; a **journey** is an interpretation of those events.
-- Pricing is a dedicated **fare engine** with an auditable **fare calculation**.
-- Money owed is a **fare charge**; stored value changes via an append-only **wallet ledger**.
-- External money movement (e.g. mock top-up) is a **payment transaction**, separate from fare.
+# 2. API
+cd backend
+cp .env.example .env   # if needed
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev            # :3000
 
-Each stage answers a different question:
+# 3. Dashboard
+cd ../frontend
+npm install
+npm run dev            # :5173 — proxies /api → :3000
+```
+
+Open http://localhost:5173 — sign in with a demo user below.
+
+**Tests:** `cd backend && npm test` (unit + integration against `transport_abt_test`).
+
+---
+
+## Demo credentials
+
+| Email | Password | Media | Notes |
+|-------|----------|-------|-------|
+| `demo@example.com` | `password123` | `CARD-DEMO-001` | Adult, £20 wallet |
+| `student@example.com` | `password123` | `CARD-STUDENT-001` | 50% discount; seed story below |
+
+**Student seed story** (after `npm run db:seed`):
+
+- £20 via top-up ledger
+- 2 completed Zone 1→2 trips (discounted)
+- 1 OPEN journey started ~5h ago → Wallet page “Run expire job” or `POST /api/admin/jobs/expire-journeys`
+
+**Sample trip (adult):**
+
+1. Tap ENTRY `VAL-CENTRAL-ENTRY-01`
+2. Tap EXIT `VAL-RIVERSIDE-EXIT-01`
+3. Fare £4.00; ledger shows FARE debit
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  TapEvent --> Journey
+  Journey --> FareCalculation
+  FareCalculation --> FareCharge
+  FareCharge --> WalletLedgerEntry
+```
+
+| Stage | Question |
+|-------|----------|
+| TapEvent | What physically happened at a validator? |
+| Journey | What trip did those taps represent? |
+| FareCalculation | What should it cost, and why? |
+| FareCharge | What does the passenger owe? |
+| WalletLedgerEntry | How did stored value change? |
+| PaymentTransaction | What external money moved (e.g. mock top-up)? |
 
 ```text
-TapEvent          → What physically happened?
-Journey           → What trip did those events represent?
-FareCalculation   → What should this trip cost, and why?
-FareCharge        → What does the passenger owe?
-WalletLedgerEntry → How did stored value change?
-PaymentTransaction→ What external money moved?
+backend/     Express + Drizzle + Postgres (transport_abt)
+frontend/    Vite vanilla TS multi-page dashboard
+src/         Legacy Spring Boot prototype (reference)
+docs/API.md  Route + error-code cheat sheet
+execution_plans/  Phased build + audits
 ```
 
 ---
 
-## Objective
+## Domain shift (Java prototype → ABT)
 
-Deliver a portfolio-ready ABT demo that can:
+| Prototype (Java) | Target (ABT) |
+|------------------|--------------|
+| Balance on `User` | `Wallet` on `TransitAccount` |
+| Payment-style `Card` | `FareMedia` (token) |
+| Zone on `Station` | `Zone` → `Station` → `Validator` |
+| Fare fields on journey | `FareCalculation` + `FareCharge` |
+| Single `Transaction` | Ledger + payment + charge |
+| Ad hoc incomplete | Cron + incomplete fare rule |
 
-1. Register a passenger, issue transit-card media, and top up a prepaid wallet.
-2. Accept tap-in / tap-out against validators and stations, producing journeys.
-3. Price completed trips with zone rules, rider discounts, and a stored fare breakdown.
-4. Debit the wallet atomically with a full ledger history.
-5. Enforce a daily fare cap.
-6. Auto-penalise journeys left open past a time limit (scheduled job).
-7. Expose a simple browser dashboard for the full flow end-to-end.
-
-**Primary milestone:** Phase 2 — tap & journey core (events → open/completed journeys) before fare and wallet layers.
-
-**Out of v1 scope:** open-loop bank cards, Stripe, weekly/peak fares, journey correction/refunds, debt recovery.
-
----
-
-## Target stack
-
-```text
-Backend:   Node.js + Express + TypeScript, Drizzle ORM, PostgreSQL, node-cron
-Frontend:  Vite (vanilla TypeScript), native fetch
-Testing:   Vitest (unit) + Supertest (integration)
-```
-
-Target layout (from the overhaul doc):
-
-```text
-backend/     # Express API, domain, jobs, Drizzle
-frontend/    # Vite dashboard
-src/         # Legacy Spring Boot prototype (reference only)
-execution_plans/   # Phase-by-phase implementation guides
-```
+**Fare numbers (v1):** base/zone pairs £2.50 same-zone / £4.00 cross-zone, daily cap £15, incomplete penalty £5, max journey 4 hours.
 
 ---
 
 ## Build phases
 
-| Phase | Focus | Detail |
+| Phase | Focus | Status |
 |-------|--------|--------|
-| 0 | Setup & skeleton | Health check, Drizzle, Vite proxy — **done** |
-| 1 | Account + network | User, transit account, fare media, wallet, zones/stations/validators — **done** |
-| 2 | Tap & journey core | `POST /api/taps`, TapEvent → Journey — **done (primary milestone)** |
-| 3 | Fare engine | Zone / rider / incomplete rules, FareCalculation + FareCharge — **done** |
-| 4 | Wallet & ledger | Atomic debit, append-only ledger — **done** |
-| 5 | Daily cap | Accumulators, CapRule, £15 day cap — **done** |
-| 6 | Incomplete job | Cron expiry after 4 hours + penalty — **done** |
-| 7 | Frontend dashboard | Login, tap simulator, journeys, ledger — **done** |
-| 8 | Polish & tests | README for the new stack, seed story, Vitest/Supertest |
+| 0–6 | Backend ABT (account → taps → fare → wallet → cap → expire job) | **done** |
+| 7 | Frontend dashboard | **done** |
+| 8 | README, seed story, Vitest/Supertest, API docs | **done** |
 
-### Running Phase 0–7 (current)
-
-```bash
-docker compose up -d postgres
-cd backend && npm install && npm run db:migrate && npm run db:seed && npm run dev
-# Cron expires OPEN journeys after 4h; demo: POST /api/admin/jobs/expire-journeys
-
-cd frontend && npm install && npm run dev
-# http://localhost:5173 — proxy /api → :3000
-# Demo: demo@example.com / password123
-```
-
-Start next: [`execution_plans/phase_8_execution_plan.md`](execution_plans/phase_8_execution_plan.md).
-
-Full phase index: [`execution_plans/README.md`](execution_plans/README.md).
+Plans & audits: [`execution_plans/`](execution_plans/). Design: [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md).
 
 ---
 
-## Domain shift (prototype → target)
+## Out of v1 scope
 
-| Prototype (Java) | Target (ABT) |
-|------------------|--------------|
-| Balance on `User` | `Wallet` on `TransitAccount` |
-| Payment-style `Card` | `FareMedia` (transit token) |
-| Zone embedded on `Station` | `Zone` → `Station` → `Validator` |
-| Journey holds fare fields | `FareCalculation` + `FareCharge` |
-| Single `Transaction` type | Ledger + payment + charge separated |
-| Incomplete handling ad hoc | Scheduled job + incomplete fare rule |
+Intentional deferrals (not unfinished work):
+
+- Open-loop bank cards
+- Weekly capping / peak fares
+- Journey correction + refunds
+- Stripe (top-up is mock)
+- Debt recovery
 
 ---
 
-## Legacy Spring prototype (reference)
+## Legacy Spring prototype
 
-Still useful for fare numbers and UI flow ideas. Not the destination architecture.
+Still useful for historical fare UI ideas. Not the destination architecture.
 
-- **Stack:** Spring Boot 3.4, Java 21, PostgreSQL, Flyway, JWT, static HTML/JS
-- **Run:** `docker compose up -d` then `mvn spring-boot:run` (app port typically `8083` — see `application.yml`)
-- **Fare config (same numbers carried into the overhaul):** base £2.50, per-zone £1.50, daily cap £15, incomplete penalty £5, max journey 4 hours
-- **API notes:** [`API_PORTFOLIO.md`](API_PORTFOLIO.md) · UI notes: [`WEBSITE_README.md`](WEBSITE_README.md)
+- Stack: Spring Boot 3.4, Java 21, Flyway, JWT, static HTML
+- Run: `docker compose up -d` then `mvn spring-boot:run` (see `application.yml`; often `:8083`)
+- Notes: [`API_PORTFOLIO.md`](API_PORTFOLIO.md), [`WEBSITE_README.md`](WEBSITE_README.md)
 
 ---
 
@@ -138,7 +135,6 @@ Still useful for fare numbers and UI flow ideas. Not the destination architectur
 
 | Document | Role |
 |----------|------|
-| [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design and information flows |
-| [`execution_plans/`](execution_plans/) | Ordered implementation plans with scaffolding and acceptance criteria |
-| [`API_PORTFOLIO.md`](API_PORTFOLIO.md) | Legacy Spring API overview |
-| [`WEBSITE_README.md`](WEBSITE_README.md) | Legacy static frontend notes |
+| [`docs/API.md`](docs/API.md) | TS API routes & error codes |
+| [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design |
+| [`execution_plans/`](execution_plans/) | Phase plans + audits |

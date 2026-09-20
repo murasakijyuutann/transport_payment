@@ -157,12 +157,14 @@ Do not aim for 100% coverage of Express glue.
 
 ## 5. Acceptance criteria
 
-- [ ] Fresh clone: follow README → health OK → demo trip works
-- [ ] `npm test` green (unit + at least one integration flow)
-- [ ] Architecture explained without reading 1600-line design doc
-- [ ] Seed produces a convincing demo state
-- [ ] Legacy Java mentioned as reference only
-- [ ] No secrets in git
+- [x] Fresh clone: follow README → health OK → demo trip works
+- [x] `npm test` green (unit + at least one integration flow)
+- [x] Architecture explained without reading 1600-line design doc
+- [x] Seed produces a convincing demo state
+- [x] Legacy Java mentioned as reference only
+- [x] No secrets in git
+
+**Audit:** [`phase_8_audit.md`](phase_8_audit.md)
 
 ## 6. After Phase 8
 

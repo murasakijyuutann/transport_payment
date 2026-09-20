@@ -11,7 +11,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:unit": "vitest run src/domain",
+    "test:integration": "vitest run src/tests"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -32,7 +34,9 @@
     "@types/node": "^26.6.2",
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.10",
+    "supertest": "^7.2.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^3.2.4"
