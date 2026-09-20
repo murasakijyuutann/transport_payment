@@ -125,6 +125,7 @@ Intentional deferrals (not unfinished work):
 | Document | Role |
 |----------|------|
 | [`docs/API.md`](docs/API.md) | TS API routes & error codes |
+| [`docs/AWS_DEPLOYMENT_GUIDE.md`](docs/AWS_DEPLOYMENT_GUIDE.md) | Step-by-step AWS deploy (S3/CloudFront/ECS/RDS) |
 | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design |
 | [`execution_plans/`](execution_plans/) | Phase plans + audits |
-| [`cloud_infrastructure_guide.md`](cloud_infrastructure_guide.md) | Optional AWS deployment sketch |
+| [`cloud_infrastructure_guide.md`](cloud_infrastructure_guide.md) | AWS architecture rationale |
