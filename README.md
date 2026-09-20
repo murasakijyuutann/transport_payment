@@ -9,7 +9,7 @@ This repository holds a working **Spring Boot prototype** and a planned **TypeSc
 | Layer | State |
 |-------|--------|
 | Legacy prototype | Spring Boot + JPA under `src/` — behavioral reference |
-| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 0 skeleton done |
+| Target system | Node.js / Express / TypeScript + Drizzle + Vite — Phase 2 (tap & journey) done |
 | Design | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) |
 | Build plan | [`execution_plans/`](execution_plans/) |
 
@@ -83,8 +83,8 @@ execution_plans/   # Phase-by-phase implementation guides
 | Phase | Focus | Detail |
 |-------|--------|--------|
 | 0 | Setup & skeleton | Health check, Drizzle, Vite proxy — **done** |
-| 1 | Account + network | User, transit account, fare media, wallet, zones/stations/validators |
-| 2 | Tap & journey core | `POST /api/taps`, TapEvent → Journey — **main milestone** |
+| 1 | Account + network | User, transit account, fare media, wallet, zones/stations/validators — **done** |
+| 2 | Tap & journey core | `POST /api/taps`, TapEvent → Journey — **done (primary milestone)** |
 | 3 | Fare engine | Zone / rider / incomplete rules, FareCalculation + FareCharge |
 | 4 | Wallet & ledger | Atomic debit, append-only ledger |
 | 5 | Daily cap | Accumulators, CapRule, £15 day cap |
@@ -92,7 +92,7 @@ execution_plans/   # Phase-by-phase implementation guides
 | 7 | Frontend dashboard | Login, tap simulator, journeys, ledger |
 | 8 | Polish & tests | README for the new stack, seed story, Vitest/Supertest |
 
-### Running Phase 0 (current)
+### Running Phase 0–2 (current)
 
 ```bash
 # Terminal 1 — Postgres (creates transport_abt on first volume init)
@@ -102,15 +102,17 @@ docker compose up -d postgres
 #     -c "CREATE DATABASE transport_abt OWNER transport_user;"
 
 # Terminal 2 — API
-cd backend && cp .env.example .env && npm install && npm run dev
+cd backend && cp .env.example .env && npm install && npm run db:migrate && npm run db:seed && npm run dev
 # → http://localhost:3000/api/health  →  {"status":"ok"}
+# Demo: demo@example.com / password123  (CARD-DEMO-001, £20)
+# Tap: POST /api/taps { mediaToken, validatorId: "VAL-CENTRAL-ENTRY-01", timestamp }
 
 # Terminal 3 — UI (proxies /api → :3000)
 cd frontend && npm install && npm run dev
 # → http://localhost:5173
 ```
 
-Start next: [`execution_plans/phase_1_execution_plan.md`](execution_plans/phase_1_execution_plan.md).
+Start next: [`execution_plans/phase_3_execution_plan.md`](execution_plans/phase_3_execution_plan.md).
 
 Full phase index: [`execution_plans/README.md`](execution_plans/README.md).
 
