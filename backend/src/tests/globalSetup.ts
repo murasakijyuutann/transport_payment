@@ -4,16 +4,16 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const TEST_URL =
-  process.env.TEST_DATABASE_URL ??
-  'postgresql://transport_user:your_password@localhost:5432/transport_abt_test';
-
-const ADMIN_URL =
-  process.env.ADMIN_DATABASE_URL ??
-  'postgresql://transport_user:your_password@localhost:5432/postgres';
+import {
+  formatPostgresSetupError,
+  resolveAdminDatabaseUrl,
+  resolveTestDatabaseUrl,
+} from './dbUrls.js';
 
 export async function setup() {
+  const TEST_URL = resolveTestDatabaseUrl();
+  const ADMIN_URL = resolveAdminDatabaseUrl();
+
   process.env.NODE_ENV = 'test';
   process.env.DATABASE_URL = TEST_URL;
   process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret-32chars!!!!!!';
@@ -22,15 +22,7 @@ export async function setup() {
   try {
     await admin.connect();
   } catch (err) {
-    console.error(`
-Postgres is not reachable at localhost:5432 (needed for integration tests).
-
-  1. Start Docker Desktop
-  2. From the repo root:  docker compose up -d postgres
-  3. Wait until the container is healthy, then re-run:  npm test
-
-Unit-only (no DB):  npm run test:unit
-`);
+    console.error(formatPostgresSetupError(err));
     throw err;
   }
 

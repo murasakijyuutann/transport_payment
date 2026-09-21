@@ -218,6 +218,7 @@ Intentional deferrals (not unfinished work):
 | Document | Role |
 |----------|------|
 | [`docs/API.md`](docs/API.md) | Routes & error codes |
+| [`docs/TROUBLESHOOTING_LOCAL_POSTGRES.md`](docs/TROUBLESHOOTING_LOCAL_POSTGRES.md) | Local Docker / :5432 / test DB issues |
 | [`docs/AWS_DEPLOYMENT_GUIDE.md`](docs/AWS_DEPLOYMENT_GUIDE.md) | AWS deploy steps |
 | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design |
 | [`execution_plans/`](execution_plans/) | Phase plans + audits |
