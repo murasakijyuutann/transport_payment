@@ -19,7 +19,21 @@ export async function setup() {
   process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret-32chars!!!!!!';
 
   const admin = new pg.Client({ connectionString: ADMIN_URL });
-  await admin.connect();
+  try {
+    await admin.connect();
+  } catch (err) {
+    console.error(`
+Postgres is not reachable at localhost:5432 (needed for integration tests).
+
+  1. Start Docker Desktop
+  2. From the repo root:  docker compose up -d postgres
+  3. Wait until the container is healthy, then re-run:  npm test
+
+Unit-only (no DB):  npm run test:unit
+`);
+    throw err;
+  }
+
   try {
     const exists = await admin.query(`SELECT 1 FROM pg_database WHERE datname = $1`, [
       'transport_abt_test',

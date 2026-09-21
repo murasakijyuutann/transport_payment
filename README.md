@@ -50,8 +50,12 @@ npm run dev            # http://localhost:5173  (proxies /api → :3000)
 Open http://localhost:5173 and sign in with a demo user below.
 
 ```bash
-# Tests (uses transport_abt_test)
-cd backend && npm test
+# Tests
+cd backend
+npm run test:unit    # fare rules — no DB needed
+# Full suite (Docker Desktop + postgres must be up):
+docker compose up -d postgres   # from repo root
+npm test                        # unit + integration (transport_abt_test)
 ```
 
 ---
@@ -138,7 +142,9 @@ flowchart LR
 | `npm run build` / `npm start` | Compile → `node dist/server.js` |
 | `npm run db:migrate` | Drizzle migrations |
 | `npm run db:seed` | Network, rules, demo users, student story |
-| `npm test` | Unit + integration |
+| `npm test` | Unit then integration (integration needs Postgres) |
+| `npm run test:unit` | Fare-engine unit tests only |
+| `npm run test:integration` | Supertest flows against `transport_abt_test` |
 | `npm run job:expire` | One-off expire (prod / EventBridge image) |
 | `npm run job:expire:dev` | Same via `tsx` |
 

@@ -12,10 +12,10 @@
     "db:seed": "tsx src/db/seed.ts",
     "job:expire": "node dist/jobs/expireIncompleteJourneys.js",
     "job:expire:dev": "tsx src/jobs/expireIncompleteJourneys.ts",
-    "test": "vitest run",
+    "test": "vitest run && vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
-    "test:unit": "vitest run src/domain",
-    "test:integration": "vitest run src/tests"
+    "test:unit": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
