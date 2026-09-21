@@ -79,11 +79,15 @@ export async function upsertDemoUser(
   riderCategoryId: string,
   mediaToken: string,
   balance: string,
+  role: 'CUSTOMER' | 'STAFF' | 'DEVICE' = 'CUSTOMER',
 ): Promise<{ accountId: string; created: boolean }> {
   const existing = await db.query.users.findFirst({
     where: eq(users.email, email),
   });
   if (existing) {
+    if (existing.role !== role) {
+      await db.update(users).set({ role }).where(eq(users.id, existing.id));
+    }
     const account = await db.query.transitAccounts.findFirst({
       where: eq(transitAccounts.userId, existing.id),
     });
@@ -102,6 +106,7 @@ export async function upsertDemoUser(
         passwordHash,
         firstName,
         lastName,
+        role,
       })
       .returning();
     if (!user) throw new Error(`Failed to create user ${email}`);

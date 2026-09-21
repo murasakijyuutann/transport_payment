@@ -12,6 +12,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 export const userStatusEnum = pgEnum('user_status', ['ACTIVE', 'SUSPENDED', 'CLOSED']);
+export const userRoleEnum = pgEnum('user_role', ['CUSTOMER', 'STAFF', 'DEVICE']);
 export const accountStatusEnum = pgEnum('account_status', ['ACTIVE', 'SUSPENDED']);
 export const mediaTypeEnum = pgEnum('media_type', [
   'TRANSIT_CARD',
@@ -57,6 +58,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   firstName: varchar('first_name', { length: 100 }).notNull(),
   lastName: varchar('last_name', { length: 100 }).notNull(),
+  role: userRoleEnum('role').notNull().default('CUSTOMER'),
   status: userStatusEnum('status').notNull().default('ACTIVE'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -54,11 +54,12 @@
       </div>
 
       <h2>Ops</h2>
-      <div class="panel stack">
-        <p class="meta">Run incomplete-journey expiry now (same as the 5-minute cron).</p>
+      <div class="panel stack" id="ops-panel" hidden>
+        <p class="meta">STAFF only — run incomplete-journey expiry now (same as the 5-minute cron).</p>
         <button type="button" class="chip" id="expire-btn">Expire stale journeys</button>
         <div id="expire-result" class="meta"></div>
       </div>
+      <p class="meta" id="ops-hint">Sign in as <span class="mono">staff@example.com</span> to run the expire job from the UI.</p>
     </div>
     <script type="module" src="/src/pages/wallet.ts"></script>
   </body>

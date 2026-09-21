@@ -6,12 +6,14 @@ import { AppError } from '../middleware/errorHandler.js';
 export const authRouter = Router();
 const authService = new AuthService();
 
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-});
+const registerSchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+  })
+  .strict();
 
 const loginSchema = z.object({
   email: z.string().email(),

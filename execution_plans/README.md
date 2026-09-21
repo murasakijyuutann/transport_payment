@@ -22,7 +22,11 @@ Detailed, phase-by-phase build guides for the TypeScript overhaul described in [
 | 7 audit | [phase_7_audit.md](phase_7_audit.md) | What was built / verified for Phase 7 |
 | 8 | [phase_8_execution_plan.md](phase_8_execution_plan.md) | Polish & tests |
 | 8 audit | [phase_8_audit.md](phase_8_audit.md) | What was built / verified for Phase 8 |
+| S1–S3 | [security_hardening_plan.md](security_hardening_plan.md) | **Post-v1 security:** ownership, taps, settlement |
+| S1 audit | [security_s1_audit.md](security_s1_audit.md) | Ownership & roles |
 
 **How to use:** finish one phase’s acceptance criteria before starting the next. Phase 2 is the first demo-worthy backend milestone; Phase 7 is the first full browser demo. **Phases 0–8 are complete for v1.**
+
+**Next (optional):** [`security_hardening_plan.md`](security_hardening_plan.md) — milestones S1 ownership → S2 authenticated taps → S3 atomic settlement.
 
 **Stack decision:** greenfield `backend/` + `frontend/` Node/TS rewrite. The legacy Spring Boot tree was removed after Phase 8.

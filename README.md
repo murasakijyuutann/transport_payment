@@ -66,12 +66,13 @@ npm test                        # unit + integration (transport_abt_test)
 |-------|----------|-------|-------|
 | `demo@example.com` | `password123` | `CARD-DEMO-001` | Adult, £20 |
 | `student@example.com` | `password123` | `CARD-STUDENT-001` | 50% discount + seed story |
+| `staff@example.com` | `password123` | `CARD-STAFF-001` | **STAFF** — can run expire job from Wallet |
 
 **Student seed story** (from `npm run db:seed`):
 
 - £20 via top-up ledger  
 - 2 completed Zone 1→2 trips (discounted)  
-- 1 OPEN journey ~5h old → Wallet “Run expire job”, or `POST /api/admin/jobs/expire-journeys`, or `npm run job:expire:dev`
+- 1 OPEN journey ~5h old → sign in as **staff** and use Wallet “Expire stale journeys”, or `POST /api/admin/jobs/expire-journeys` with a STAFF JWT, or `npm run job:expire:dev`
 
 **Sample adult trip:** ENTRY `VAL-CENTRAL-ENTRY-01` → EXIT `VAL-RIVERSIDE-EXIT-01` → fare **£4.00**.
 
@@ -194,6 +195,7 @@ Architecture rationale: [`cloud_infrastructure_guide.md`](cloud_infrastructure_g
 | 6 | Incomplete-journey job | done |
 | 7 | Frontend dashboard | done |
 | 8 | README, seed story, tests, API docs | done |
+| S1–S3 | Security hardening (ownership, taps, settlement) | [planned](execution_plans/security_hardening_plan.md) |
 
 Details: [`execution_plans/`](execution_plans/).
 
@@ -219,5 +221,6 @@ Intentional deferrals (not unfinished work):
 | [`docs/AWS_DEPLOYMENT_GUIDE.md`](docs/AWS_DEPLOYMENT_GUIDE.md) | AWS deploy steps |
 | [`ts_payment_overhaul_v1.md`](ts_payment_overhaul_v1.md) | Full ABT design |
 | [`execution_plans/`](execution_plans/) | Phase plans + audits |
+| [`execution_plans/security_hardening_plan.md`](execution_plans/security_hardening_plan.md) | Post-v1 security milestones S1–S3 |
 | [`cloud_infrastructure_guide.md`](cloud_infrastructure_guide.md) | AWS architecture |
 | [`backend/.env.example`](backend/.env.example) | Env vars including `ENABLE_CRON` |

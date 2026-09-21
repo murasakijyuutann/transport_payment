@@ -1,9 +1,12 @@
+export type UserRole = 'CUSTOMER' | 'STAFF' | 'DEVICE';
+
 export interface AccountView {
   accountId: string;
   userId: string;
   email: string;
   firstName: string;
   lastName: string;
+  role: UserRole;
   riderCategory: { name: string; discountPercent: string };
   media: Array<{ token: string; mediaType: string; status: string }>;
   wallet: { balance: string; currency: string };

@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { requireAuth, requireRole, type AuthedRequest } from '../middleware/auth.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { AccountService } from '../services/AccountService.js';
 import { JourneyService } from '../services/JourneyService.js';
 
@@ -6,7 +8,7 @@ export const adminRouter = Router();
 const accountService = new AccountService();
 const journeyService = new JourneyService();
 
-/** Public for tap-simulator demos; JWT optional later. */
+/** Public catalog for tap simulator UI (no secrets). */
 adminRouter.get('/admin/stations', async (_req, res, next) => {
   try {
     const stations = await accountService.listStations();
@@ -16,12 +18,21 @@ adminRouter.get('/admin/stations', async (_req, res, next) => {
   }
 });
 
-/** Demo/ops: run incomplete-journey expiry immediately (no wait for cron). */
-adminRouter.post('/admin/jobs/expire-journeys', async (_req, res, next) => {
-  try {
-    const result = await journeyService.expireOpenJourneys(new Date());
-    res.json(result);
-  } catch (err) {
-    next(err);
-  }
-});
+/** Ops: run incomplete-journey expiry immediately (STAFF only). */
+adminRouter.post(
+  '/admin/jobs/expire-journeys',
+  requireAuth,
+  requireRole('STAFF'),
+  async (req, res, next) => {
+    try {
+      const auth = (req as AuthedRequest).auth;
+      if (!auth) {
+        throw new AppError(401, 'Unauthorized', 'UNAUTHORIZED');
+      }
+      const result = await journeyService.expireOpenJourneys(new Date());
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);

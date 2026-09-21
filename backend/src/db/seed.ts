@@ -44,6 +44,21 @@ async function seed() {
 
   await seedDemoStory(student.accountId);
 
+  const staff = await upsertDemoUser(
+    'staff@example.com',
+    'Ops',
+    'Staff',
+    adultId,
+    'CARD-STAFF-001',
+    '0.00',
+    'STAFF',
+  );
+  if (staff.created) {
+    console.log('User: staff@example.com / password123 (STAFF, CARD-STAFF-001)');
+  } else {
+    console.log('User staff@example.com already exists — role ensured STAFF');
+  }
+
   console.log('Seed complete.');
   await pool.end();
 }

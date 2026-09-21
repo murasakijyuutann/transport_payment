@@ -1,5 +1,7 @@
 // Shared interfaces mirrored by the frontend as needed.
 
+export type UserRole = 'CUSTOMER' | 'STAFF' | 'DEVICE';
+
 export interface HealthResponse {
   status: string;
 }
@@ -7,6 +9,7 @@ export interface HealthResponse {
 export interface AuthPayload {
   sub: string;
   accountId: string;
+  role: UserRole;
 }
 
 export interface AccountView {
@@ -15,6 +18,7 @@ export interface AccountView {
   email: string;
   firstName: string;
   lastName: string;
+  role: UserRole;
   riderCategory: { name: string; discountPercent: string };
   media: Array<{ token: string; mediaType: string; status: string }>;
   wallet: { balance: string; currency: string };

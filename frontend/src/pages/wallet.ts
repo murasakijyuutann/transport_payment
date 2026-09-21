@@ -11,6 +11,8 @@ const capEl = document.querySelector<HTMLElement>('#cap');
 const ledgerBody = document.querySelector<HTMLElement>('#ledger-body');
 const customInput = document.querySelector<HTMLInputElement>('#custom-amount');
 const expireResult = document.querySelector<HTMLElement>('#expire-result');
+const opsPanel = document.querySelector<HTMLElement>('#ops-panel');
+const opsHint = document.querySelector<HTMLElement>('#ops-hint');
 
 async function refresh() {
   clearError(errEl);
@@ -25,6 +27,13 @@ async function refresh() {
     }
     if (capEl) {
       capEl.textContent = `${money(cap.remainingHeadroom)} left of ${money(cap.capAmount)} (used ${money(cap.chargedAmount)})`;
+    }
+    if (account.role === 'STAFF') {
+      opsPanel?.removeAttribute('hidden');
+      opsHint?.setAttribute('hidden', '');
+    } else {
+      opsPanel?.setAttribute('hidden', '');
+      opsHint?.removeAttribute('hidden');
     }
     if (ledgerBody) {
       if (ledger.entries.length === 0) {

@@ -11,7 +11,7 @@ import {
 } from '../db/schema.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { signToken } from '../middleware/auth.js';
-import type { AccountView } from '../shared/types.js';
+import type { AccountView, UserRole } from '../shared/types.js';
 import { AccountService } from './AccountService.js';
 
 export interface RegisterInput {
@@ -63,6 +63,7 @@ export class AuthService {
           passwordHash,
           firstName: input.firstName.trim(),
           lastName: input.lastName.trim(),
+          role: 'CUSTOMER',
         })
         .returning();
 
@@ -96,9 +97,7 @@ export class AuthService {
       return { userId: user.id, accountId: account.id };
     });
 
-    const account = await this.accounts.getAccountView(accountId);
-    const token = signToken({ sub: userId, accountId });
-    return { token, account };
+    return this.issueAuth(userId, accountId);
   }
 
   async login(email: string, password: string): Promise<AuthResult> {
@@ -121,9 +120,21 @@ export class AuthService {
     if (!account) {
       throw new AppError(500, 'Transit account missing', 'ACCOUNT_MISSING');
     }
+    if (account.status !== 'ACTIVE') {
+      throw new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+    }
 
-    const view = await this.accounts.getAccountView(account.id);
-    const token = signToken({ sub: user.id, accountId: account.id });
-    return { token, account: view };
+    return this.issueAuth(user.id, account.id, user.role);
+  }
+
+  private async issueAuth(
+    userId: string,
+    accountId: string,
+    role?: UserRole,
+  ): Promise<AuthResult> {
+    const account = await this.accounts.getAccountView(accountId);
+    const resolvedRole = role ?? account.role;
+    const token = signToken({ sub: userId, accountId, role: resolvedRole });
+    return { token, account };
   }
 }
